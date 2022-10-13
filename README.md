@@ -1,2 +1,2 @@
 # GestaltMatcher-Arc
-Modernized version of GestaltMatcher based on ArcFace, using GLINT
+Under construction, will be released before 21/12.
