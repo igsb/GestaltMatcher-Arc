@@ -14,7 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -127,3 +126,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# PyCharm project stuff
+.idea/
+
+# Any CSV-files
+*.csv
+
+# Tensorboard-stuff
+runs/
+
+# saved model weights
+saved_models/
