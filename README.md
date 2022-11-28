@@ -1,7 +1,7 @@
 # GestaltMatcher-Arc
 This repository contains all the code used to train and evaluate our GestaltMatcher-Arc models in our WACV2023 
 accepted paper: Improving Deep Facial Phenotyping for Ultra-rare Disorder Verification Using Model Ensembles 
-(https://arxiv.org/abs/2211.06764).\
+(https://arxiv.org/abs/2211.06764 ).\
 This repo also contains snippets of code from insightface (https://github.com/deepinsight/insightface).
 
 In order to reproduce the results access must be requested to the GestaltMatcher DataBase (GMDB).
