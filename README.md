@@ -1,12 +1,10 @@
-# GestaltMatcher-Arc
-This repository contains all the code used to train and evaluate our GestaltMatcher-Arc models in our WACV2023 
-accepted paper: Improving Deep Facial Phenotyping for Ultra-rare Disorder Verification Using Model Ensembles 
-(https://arxiv.org/abs/2211.06764).\
-This repo also contains snippets of code from insightface (https://github.com/deepinsight/insightface).
+# GestaltMatcher-Arc: Service
+This is the `service`-branch of the repository, containing all the code for our GestaltMatcher service.
+This repo also contains snippets of code from insightface (https://github.com/deepinsight/insightface); both from their 
+alignment process and their RetinaFace detector.
 
-In order to reproduce the results access must be requested to the GestaltMatcher DataBase (GMDB).
-That can be done following this link (https://db.gestaltmatcher.org/documents) if you're affiliated with a 
-medical facility or faculty.
+The concept is to first acquire the aligned face, followed by encoding it, and lastly comparing the encoding to a set
+of gallery encodings. The expected in- and output of each stage is described after `Environment`-section.
 
 ## Environment
 Please use python version 3.7+, and the package listed in requirements.txt.
@@ -40,108 +38,57 @@ onnx2torch
 albumentations
 ```
 
-## Data preparation
-The data should be stored in `../data/GestaltMatcherDB/<version>`, it can be downloaded from http://gestaltmatcher.org 
-on request. \
-Please download the following two files from GMDB website:
-* GMDB metadata
-* GMDB_original_images_v1.0.3.tar.gz
+## Crop and align faces
+In order to get aligned images, you have to run `crop_align.py`. It is possible to either crop and align a single image,
+multiple images in a list or a directory of images.\
+With `python crop_align.py` you will crop and align all images in `--data` (default: `./data/cases`) and save them to 
+the `--save_dir` (default: `./data/cases_align`). This is quite free-form and does not need to be a directory, but can 
+also be an image name or list of image names.
 
-```
-cd ../data/GestaltMatcherDB
-tar -xzvf GMDB_original_images_v1.0.3.tar.gz
-mv GMDB_original_images_v1.0.3 gmdb_images
-tar -xzvf GMDB_metadata.tar.gz
-mv gmdb_metadata/* .
-```
-
-Make sure your final data structure looks as follows: \
-`..\data\GestaltMatcherDB\<version>`\
-`...\gmdb_images`\
-`...\gmdb_metadata`,\
-where `<version>` is your version of GMDB. 
-
-### Crop and align faces
-In order to get the aligned images, you have to run the `detect_pipe.py` and `align_pipe.py` from 
-https://github.com/AlexanderHustinx/GestaltEngine-FaceCropper. \
-More details are in the README of that repo. 
-
-The face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from the repository 
-mentioned above.\
+The face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from 
+[Google Docs](https://drive.google.com/open?id=1oZRSG0ZegbVkVwUd8wUIQx8W7yfZ_ki1) with pw: fstq \
 If you don't have GPU, please use `--cpu` to run on cpu mode.
 
-FaceCropper command to get relevant coordinates of faces from data directory:
-```
-python detect_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_images/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --result_type coords
-```
+## Encode photos 
+With `python predict.py` you will encode all images in `--data` (default: `./data/cases_align`). This is quite free-form
+and does not need to be a directory, but can also be an image name or list of image names. \
+There are several options w.r.t. saving the encodings. By default, the encoding for each image is saved into a single 
+`*.csv`-file named by `--output_name` (default: `all_encodings.csv`) which is stored in the directory given by 
+`--save_dir` (default: `data/encodings`).\
+Alternatively, you can choose to save all encodings into separate files, holding only the encodings per image, using 
+`--separate_outputs`. In this case the files will be named after the image name and those outputs will be saved in the 
+`--save_dir`.\
+Lastly, it is possible to save the encodings directly as a pickle of a DataFrame. In this case you should use the flag 
+`--save_as_pickle`. The `--output_name` then end in `*.pkl` instead. 
 
-FaceCropper command to align all faces based on the coordinates according to the ArcFace alignment used by insightface:
-```
-python align_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_align/ --coords_file ../data/GestaltMatcherDB/<version>/gmdb_rot/_face_coords.csv
-```
-Note: the alignment will require the `scikit-image` package.\
-Make sure to replace the `<version>` in the paths with your GMDB version; highest version at the time of writing is v1.0.3
-
-## Train models
-The training of GestaltMatcher-Arc needs to be run twice: a) for the resnet-50 mix model, and b) for the resnet-100 model.
-For these also require the pretrained ArcFace models from insightface: `glint360k_r50.onnx` and `glint360k_r100.onnx` to 
-be in the directory `./saved_models`. \
-These models can be downloaded here: https://github.com/deepinsight/insightface/tree/master/model_zoo 
-
-To reproduce our Gestalt Matcher model listed in the table by training from scratch, use:
-```
-python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data 
-python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data 
-```
-
-You may choose whatever seed and session you find useful.
-`--seed 11` was used to obtain these results, others have not been tested.
-
-Using the argument `--use_tensorboard` allows you to track your models training and validation curves over time.
-
-Training a model without GPU has not been tested.
+For machines without a GPU, please use `--no_cuda`.
 
 ### Pretrained models
 Due to ethical reasons the pretrained models are not made available publicly. \
 Once access has been granted to GMDB, the pretrained model weights can be requested as well.
 
-## Encode photos and evaluate models
-With `python predict_ensemble.py` you will encode all images in `--data_dir`, which by default is set to 
-`../data/GestaltMatcherDB/v1.0.3/gmdb_align`.\
-The face encodings will be saved to `all_encodings.csv`.
+The pretrained models by default are stored in a directory set by `--weights` (default:`./saved_models/`). Further, 
+using the arguments `--model_a_path`, `--model_b_path` and `--model_c_path`, the paths within this directory need to be
+specified (default: uses all supplied model names). \
+When setting any of those to 'None' they will not be included in the ensemble.
 
-For the machine without GPU, please use `--no_cuda`.
+## Evaluate encodings with gallery encodings
+With `evaluate.py` you can evaluate case encodings using gallery encodings.
 
-The following command will generate `all_encodings.csv` using the three models in our model ensemble, as well as the 
-test time augmentation described in the paper:
+There are several ways to load the encodings, either using a single file containing all encodings, or separate encoding-
+files (e.g. after using `--seperate_outputs` for `predict.py`) for each image. \
+When using separate encoding files use `--separate_files_gallery` and `--separate_files_cases`, depending on if you used
+separate outputs for both gallery and cases. When specifying these flags you can use either all encodings in the 
+directories given by `--gallery_dir` and `--case_dir`, or you can give a list of filenames within those directories 
+using `--gallery_list` and `--case_list`.\
+If you'd rather use only two file, for all gallery encodings and all case encodings, you simply specify only those
+filenames within their respective directories (and do NOT use `--separate_files_<x>`).
 
-```
-python predict_ensemble.py
-```
+Next, you need to specify the directory containing the GMDB metadata using `--metadata_dir`.
 
-### Evaluation
-Using the previously computed encodings as input for evaluation will allow you to obtain the results listed in the table.
-
-```
-python evaluate_ensemble.py
-
-===========================================================
----------   test: Frequent, gallery: Frequent    ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-frequent|5761    |593   |52.99 |71.01 |79.19 |89.99 |
----------       test: Rare, gallery: Rare        ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-rare    |792.7   |312.3 |35.98 |53.93 |62.43 |76.56 |
---------- test: Frequent, gallery: Frequent+Rare ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-frequent|6553.7  |593   |50.79 |69.17 |76.66 |88.37 |
----------   test: Rare, gallery: Frequent+Rare   ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-rare    |6553.7  |312.3 |24.05 |38.44 |44.53 |57.95 |
-===========================================================
-
-```
-
+Lastly, you will need to specify the lookup table that was used during the model training, which is automatically 
+generated and saved when running the training. However, it is included in the directory under the name 
+`lookup_table_gmdb.txt` and is the default path of `--lut` (the argument used to set it).
 
 ## Contact
 Tzung-Chien Hsieh
