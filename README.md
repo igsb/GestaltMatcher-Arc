@@ -64,7 +64,9 @@ where `<version>` is your version of GMDB.
 ### Crop and align faces
 In order to get the aligned images, you have to run the `detect_pipe.py` and `align_pipe.py` from 
 https://github.com/AlexanderHustinx/GestaltEngine-FaceCropper. \
-More details are in the README of that repo. 
+More details are in the README of that repo. \
+Most importantly the face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from 
+[Google Docs](https://drive.google.com/open?id=1oZRSG0ZegbVkVwUd8wUIQx8W7yfZ_ki1) with pw: fstq
 
 The face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from the repository 
 mentioned above.\
