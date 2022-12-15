@@ -2,20 +2,21 @@
 # GestaltMatcherDB with only basic augmentation:
 # flipping, color jittering
 
+import os
+
 import cv2
 import pandas as pd
-from torch.utils.data import Dataset
-
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from torch.utils.data import Dataset
 
 from lib.utils import normalize, resize_with_ratio_squared, shrink_zoom_augment
 
 
 class GestaltMatcherDataset(Dataset):
     def __init__(self,
-                 imgs_dir=-1,
-                 target_file_path=-1,
+                 imgs_dir,
+                 target_file_path,
                  in_channels=1,
                  target_size=100,
                  img_postfix='',
@@ -26,16 +27,8 @@ class GestaltMatcherDataset(Dataset):
         self.img_postfix = img_postfix
         self.target_size = target_size
         self.in_channels = in_channels
-
-        if imgs_dir == -1:
-            self.imgs_dir = "../data/GestaltMatcherDB/images_cropped/"
-        else:
-            self.imgs_dir = imgs_dir
-
-        if target_file_path == -1:
-            self.target_file = "../data/GestaltMatcherDB/case_a_train.csv"
-        else:
-            self.target_file = target_file_path
+        self.imgs_dir = imgs_dir
+        self.target_file = target_file_path
 
         self.targets = self.handle_target_file()
 
@@ -87,7 +80,7 @@ class GestaltMatcherDataset(Dataset):
         return normalize(img, type='arcface')
 
     def __getitem__(self, i, to_augment=True):
-        img = cv2.imread(f"{self.imgs_dir}{self.targets.iloc[i]['image_id']}{self.img_postfix}.jpg")
+        img = cv2.imread(os.path.join(self.imgs_dir, f"{self.targets.iloc[i]['image_id']}{self.img_postfix}.jpg"))
         target_id = self.lookup_table.index(self.targets.iloc[i]['label'])
 
         img = self.preprocess(img)
