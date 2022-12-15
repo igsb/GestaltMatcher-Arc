@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import os
 import random
 
 import numpy as np
@@ -169,8 +170,8 @@ def train(args, model, device, train_loader, optimizer, epochs=-1, val_loader=No
             f"_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt")
         torch.save(
             model.state_dict(),
-            f"{args.weight_dir}/s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}"
-            f"_{args.dataset_version}_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt")
+            os.path.join(args.weight_dir,f"s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}"
+            f"_{args.dataset_version}_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt"))
 
     if args.use_tensorboard:
         writer.flush()
@@ -335,7 +336,8 @@ def main():
     print(f"Weighted cross entropy weights: {args.ce_weights}")
 
     # Create model
-    model = MyArcFace(args.num_classes, dataset_base=f'saved_models/{args.model_type}.onnx', device=device, freeze=True).to(device)
+    model = MyArcFace(args.num_classes, dataset_base=os.path.join(args.weight_dir, f'{args.model_type}.onnx'),
+                      device=device, freeze=True).to(device)
     print(f"Created {'frozen ' if args.freeze else ''}{args.model_type} model with {args.in_channels} in channel"
           f"{'s' if args.in_channels > 1 else ''}, 512d feature dimensionality and {args.num_classes} classes")
 
@@ -369,9 +371,9 @@ def main():
     # validate(model, device, val_loader, args, out=True)
 
     # Save entire model
-    torch.save(model, f"{args.weight_dir}/s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}"
-                      f"_{args.dataset_version}_bs{args.batch_size}_size{args.img_size}"
-                      f"_channels{args.in_channels}_last_model.pth")
+    torch.save(model, os.path.join(args.weight_dir, f"s{args.session}_{args.model_type}_512d_{args.dataset}"
+                                                    f"_{args.dataset_type}_{args.dataset_version}_bs{args.batch_size}"
+                                                    f"_size{args.img_size}_channels{args.in_channels}_last_model.pth"))
 
 
 if __name__ == '__main__':
