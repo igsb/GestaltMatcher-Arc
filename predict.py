@@ -1,8 +1,6 @@
-## predict_evaluate_cases.py
+## predict.py
 # Run the chosen models on every image in the desired directory
-# and save the encodings to the file: "case_encodings.csv"
-# also run the evaluation-script between the "encodings.csv" (of the gallery set)
-# and the new case encodings
+# and save the encodings to the designated file
 
 import argparse
 from glob import glob
@@ -109,7 +107,7 @@ def predict(models, device, img_paths, args):
             df = pd.DataFrame(columns=["img_name", "model", "flip", "gray", "class_conf", "representations"])
         else:
             # create output csv-file
-            f = open(f"{args.save_dir}/{args.output_name}", "w+")
+            f = open(os.path.join(args.save_dir, args.output_name), "w+")
             f.write(f"img_name;model;flip;gray;class_conf;representations\n")
 
     img_size = args.img_size
@@ -130,7 +128,7 @@ def predict(models, device, img_paths, args):
                     df = pd.DataFrame(columns=["img_name", "model", "flip", "gray", "class_conf", "representations"])
                 else:
                     # create output csv-file
-                    f = open(f"{args.save_dir}/{img_name.rsplit('_', 1)[0]}_encoding.csv", "w+")
+                    f = open(os.path.join(args.save_dir, f"{img_name.rsplit('_', 1)[0]}_encoding.csv"), "w+")
                     f.write(f"img_name;model;flip;gray;class_conf;representations\n")
 
             for idx, model in enumerate(models):
@@ -160,19 +158,17 @@ def predict(models, device, img_paths, args):
                             f.write(f"{img_name};m{idx};{int(flip)};{int(gray)};{pred};{pred_rep.squeeze().tolist()}\n")
 
             if args.separate_outputs and args.save_as_pickle:
-                df.to_pickle(f"{args.save_dir}/{img_name.rsplit('_', 1)[0]}_encoding.pkl")
+                df.to_pickle(os.path.join(args.save_dir, f"{img_name.rsplit('_', 1)[0]}_encoding.pkl"))
     toc = time.time()
 
     # Save DataFrame as pickle
     if not args.separate_outputs:
         if args.save_as_pickle:
             # check output-file name
-            fix_ext = args.output_name.split('.')
-            if len(fix_ext) == 1:
-                args.output_name = f"{args.output_name}.pkl"
-            else:
-                args.output_name = f"{fix_ext[0]}.pkl"
-            df.to_pickle(f"{args.save_dir}/{args.output_name}")
+            # fix_ext = args.output_name.split('.')
+            fix_ext = os.path.splitext(args.output_name)[0]
+            output_name = f"{fix_ext}.pkl"
+            df.to_pickle(os.path.join(args.save_dir, output_name))
         else:  # save as csv
             f.flush()
             f.close()
@@ -221,15 +217,14 @@ def main():
     # variables: aligned_img_paths, img_names
 
     # Make the save directory if it doesn't exist
-    os.makedirs(f"{args.save_dir}", exist_ok=True)
+    os.makedirs(args.save_dir, exist_ok=True)
 
     # Check if the args.output_name contains the correct extension
-    output_name = args.output_name.split('.')
-    if len(output_name) == 1:
-        if args.save_as_pickle:
-            args.output_name = f"{output_name[0]}.pkl"
-        else:
-            args.output_name = f"{output_name[0]}.csv"
+    output_name = os.path.splitext(args.output_name)[0]
+    if args.save_as_pickle:
+        args.output_name = f"{output_name}.pkl"
+    else:
+        args.output_name = f"{output_name}.csv"
 
     # Create model
     def get_model(weights, device='cuda'):

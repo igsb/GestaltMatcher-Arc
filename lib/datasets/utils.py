@@ -1,3 +1,4 @@
+import os
 from skimage import io
 
 from lib.datasets.gestalt_matcher_dataset import GestaltMatcherDataset
@@ -21,8 +22,9 @@ def get_train_and_val_datasets(
             in_channels=color_channels,
             img_postfix=img_postfix,
             target_size=img_size,
-            imgs_dir=f"{base_dir}/GestaltMatcherDB/{version}/gmdb_align/",
-            target_file_path=f"{base_dir}/GestaltMatcherDB/{version}/gmdb_metadata/gmdb_train_images_{version}.csv",
+            imgs_dir=os.path.join(base_dir, "GestaltMatcherDB", version, "gmdb_align"),
+            target_file_path=os.path.join(base_dir, "GestaltMatcherDB", version, "gmdb_metadata",
+                                          f"gmdb_train_images_{version}.csv"),
             lookup_table=lookup_table,
             aspect_ratio=aspect_ratio)
 
@@ -31,8 +33,9 @@ def get_train_and_val_datasets(
             img_postfix=img_postfix,
             target_size=img_size,
             augment=False,
-            imgs_dir=f"{base_dir}/GestaltMatcherDB/{version}/gmdb_align/",
-            target_file_path=f"{base_dir}/GestaltMatcherDB/{version}/gmdb_metadata/gmdb_val_images_{version}.csv",
+            imgs_dir=os.path.join(base_dir, "GestaltMatcherDB", version, "gmdb_align"),
+            target_file_path=os.path.join(base_dir, "GestaltMatcherDB", version, "gmdb_metadata",
+                                          f"gmdb_val_images_{version}.csv"),
             lookup_table=(lookup_table if lookup_table else dataset_train.get_lookup_table()),
             aspect_ratio=aspect_ratio)
 

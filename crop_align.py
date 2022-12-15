@@ -1,8 +1,7 @@
-## predict_evaluate_cases.py
-# Run the chosen models on every image in the desired directory
-# and save the encodings to the file: "case_encodings.csv"
-# also run the evaluation-script between the "encodings.csv" (of the gallery set)
-# and the new case encodings
+## crop_align.py
+# Run the cropper model on every image in the desired directory
+# followed by aligning them based on some landmarks
+# and lastly saving the aligned image(s) in the designated directory
 
 import argparse
 from glob import glob
@@ -72,14 +71,13 @@ args = parse_args()
 
 
 def face_align_crop(net, img_paths, device):
-    save_dir = f"{args.save_dir}"
+    save_dir = args.save_dir
     # img_paths = [y for x in os.walk(data) for y in glob(os.path.join(x[0], '*.*'))]
     aligned_imgs = []
     skipped_imgs = []
     img_names = []
     for img_path in img_paths:
-        img_name = (img_path.split('\\')[-1]).split('.')[0]
-        img_name = (img_name.split('/')[-1])    # just in case we use the other slash ...
+        img_name = os.path.splitext(os.path.basename(img_path))[0]
         img_names.append(img_name)
 
         if args.single_align:
@@ -105,12 +103,12 @@ def detect(net, img_path, img_name, device, save_dir='', first=False):
     subdir_name = ''
     if type(img_path) == str:
         if args.use_subdirectories:
-            subdir_name = (img_path.split('/')[-1]).split('\\')[0]
-            save_dir = f"{save_dir}/{subdir_name}"
-        os.makedirs(f"{save_dir}", exist_ok=True)
+            subdir_name = os.path.split(os.path.split(img_path)[-2])[-1]
+            save_dir = os.path.join(save_dir, subdir_name)
+        os.makedirs(save_dir, exist_ok=True)
 
         ## *.gif format is not supported by cv.imread(..)
-        if img_path.split('.')[-1] == "gif":
+        if os.path.splitext(img_path) == ".gif":
             cap = cv2.VideoCapture(img_path)
             ret, img_raw_original = cap.read()
             cap.release()
@@ -293,7 +291,7 @@ def align(img, coords, img_name, save_img=True, save_dir=''):
 
     # save image
     if save_img:
-        cv2.imwrite(f"{save_dir}/{img_name}_aligned.jpg", aligned_img)
+        cv2.imwrite(os.path.join(save_dir, f"{img_name}_aligned.jpg"), aligned_img)
 
     return aligned_img
 
@@ -384,7 +382,10 @@ def main():
     aligned_img_paths = [y for x in os.walk(args.save_dir) for y in glob(os.path.join(x[0], '*.*'))]
     #print(f"{aligned_img_paths=}")
 
-    print(f"Cropping and aligning took {(toc-tic):.2f}s{'.' if len(img_paths) == 1 else f' (~{((toc-tic)/len(img_paths)):.2f}s per image).'}")
+    if len(img_paths) > 0:
+        print(f"Cropping and aligning took {(toc-tic):.2f}s{'.' if len(img_paths) == 1 else f' (~{((toc-tic)/len(img_paths)):.2f}s per image).'}")
+    else:
+        print("No images were found at the given location.")
 
 if __name__ == '__main__':
     main()

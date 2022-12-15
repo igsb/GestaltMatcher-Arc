@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 
@@ -10,7 +11,7 @@ class MyArcFace(nn.Module):
 
     def __init__(self,
                  num_classes,
-                 dataset_base="saved_models/glint360k_r50.onnx",
+                 dataset_base=os.path.join("saved_models", "glint360k_r50.onnx"),
                  device="cuda",
                  freeze=False):
         super(MyArcFace, self).__init__()

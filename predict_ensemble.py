@@ -48,6 +48,8 @@ def parse_args():
                         help='random seed (default: 11)')
     parser.add_argument('--data_dir', default='../data/GestaltMatcherDB/v1.0.3/gmdb_align', dest='data_dir',
                         help='Path to the data directory containing the images to run the model on.')
+    parser.add_argument('--weight_dir', default='../data/GestaltMatcherDB/v1.0.3/gmdb_align', dest='weight_dir',
+                        help='Path to the directory containing the model weights.')
 
     return parser.parse_args()
 
@@ -63,7 +65,7 @@ def predict(models, device, data, args):
     with torch.no_grad():
         for idx, img_path in enumerate(data):
             print(f"{img_path=}")
-            img = cv2.imread(f"{args.data_dir}/{img_path}")
+            img = cv2.imread(os.path.join(args.data_dir, img_path))
 
             for idx, model in enumerate(models):
                 for flip in [False,True]:
@@ -119,13 +121,15 @@ def main():
         return model
 
     # mix
-    model1 = get_model("saved_models/s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth",
-                              device=device)
+    model1 = get_model(os.path.join(args.weight_dir,
+                                    "s224_glint360k_r50_512d_gmdb__v1.0.3_bs64__loss_size112_3channels_last_model.pth"),
+                       device=device)
     # finetuned r100
-    model2 = get_model("saved_models/s2_glint360k_r100_512d_gmdb__v1.0.3_bs128_size112_channels3_last_model.pth",
-                              device=device)
+    model2 = get_model(os.path.join(args.weight_dir,
+                                    "s221_glint360k_r100_512d_gmdb__v1.0.3_bs128__loss_size112_3channels_last_model.pth"),
+                       device=device)
     # original r100
-    model3 = get_model("saved_models/glint360k_r100.onnx", device=device)
+    model3 = get_model(os.path.join(args.weight_dir, "glint360k_r100.onnx"), device=device)
 
     models = [model1, model2, model3]
     predict(models, device, data, args)
