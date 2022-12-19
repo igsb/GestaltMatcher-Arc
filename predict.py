@@ -70,14 +70,14 @@ def parse_args():
                         help='Name of the output-file where to encodings will be saved to '
                              '(ignored if \'--separate_csv\' is set). Default: \'case_encodings.csv\'')
 
-    parser.add_argument('--weights', default='saved_models', dest='weights',
+    parser.add_argument('--weight_dir', default='saved_models', dest='weight_dir',
                         help='Path to the directory containing the model weights. Default: \'saved_models\'')
 
     parser.add_argument('--model_a_path', dest='model_a_path',
-                        default='s224_glint360k_r50_512d_gmdb__v1.0.3_bs64__loss_size112_3channels_last_model.pth',
+                        default='s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth',
                         help='Name of the file containing the weights for model A.')
     parser.add_argument('--model_b_path', dest='model_b_path',
-                        default='s221_glint360k_r100_512d_gmdb__v1.0.3_bs128__loss_size112_3channels_last_model.pth',
+                        default='s2_glint360k_r100_512d_gmdb__v1.0.3_bs128_size112_channels3_last_model.pth',
                         help='Name of the file containing the weights for model B.')
     parser.add_argument('--model_c_path', dest='model_c_path', default='glint360k_r100.onnx',
                         help='Name of the file containing the weights for model C.')
@@ -241,21 +241,21 @@ def main():
     # mix
     model1 = None
     if args.model_a_path != "None":
-        model1 = get_model(os.path.join(args.weights, args.model_a_path), device=device)
+        model1 = get_model(os.path.join(args.weight_dir, args.model_a_path), device=device)
         model1.eval()
         models.append(model1)
 
     # finetuned r100
     model2 = None
     if args.model_b_path != "None":
-        model2 = get_model(os.path.join(args.weights, args.model_b_path), device=device)
+        model2 = get_model(os.path.join(args.weight_dir, args.model_b_path), device=device)
         model2.eval()
         models.append(model2)
 
     # original r100
     model3 = None
     if args.model_c_path != "None":
-        model3 = get_model(os.path.join(args.weights, args.model_c_path), device=device)
+        model3 = get_model(os.path.join(args.weight_dir, args.model_c_path), device=device)
         model3.eval()
         models.append(model3)
 

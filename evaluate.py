@@ -32,6 +32,9 @@ def parse_args():
     parser.add_argument('--gallery_dir', default='', dest='gallery_dir',
                         help='Path to the directory containing the gallery encodings.')
 
+    parser.add_argument('--top_n', default=5, dest='top_n',
+                        help='Top-N results to show per image/encoding')
+
     parser.add_argument('--case_list', default=[], dest='case_list', nargs='*', #nargs='+',
                         help='List of case encodings to use. Default: []')
     parser.add_argument('--gallery_list', default=[], dest='gallery_list', nargs='*', #nargs='+',
@@ -290,21 +293,22 @@ def main():
 
     ## Evaluate
     # Get all synd_ids, dists, img_ids, subject_ids per image in gallery
+    n=args.top_n
     args.gallery_preset = 'rare+freq'
     # all_ranks = evaluate(gallery_df=gallery_df, case_df=case_df, metadata_dir=args.metadata_dir)
     all_ranks = evaluate("all", metadata_dir=args.metadata_dir)
     all_ranks = np.array(all_ranks)
-    print(f"Top-5 results img_id (synd_id, dist, img_id, subject_id):\n{all_ranks[:,0,:5]}")
+    print(f"Top-5 results img_id (synd_id, dist, img_id, subject_id):\n{all_ranks[:,:,:n]}")
 
     # Get all synd_ids, dists, img_ids, subject_ids per syndrome in gallery
     first_synd_ranks = get_first_synds(*all_ranks)
     first_synd_ranks = np.array(first_synd_ranks)
-    print(f"Top-5 synd_id results (synd_id, dist, img_id, subject_id):\n{first_synd_ranks[:,0,:5]}")
+    print(f"Top-5 synd_id results (synd_id, dist, img_id, subject_id):\n{first_synd_ranks[:,:,:n]}")
 
     # Get all synd_ids, dists, img_ids, subject_ids per subject in gallery
     first_subject_ranks = get_first_subject(*all_ranks)
     first_subject_ranks = np.array(first_subject_ranks)
-    print(f"Top-5 subject_id results (synd_id, dist, img_id, subject_id):\n{first_subject_ranks[:,0,:5]}")
+    print(f"Top-5 subject_id results (synd_id, dist, img_id, subject_id):\n{first_subject_ranks[:,:,:n]}")
 
 if __name__ == '__main__':
     main()

@@ -67,7 +67,7 @@ For machines without a GPU, please use `--no_cuda`.
 Due to ethical reasons the pretrained models are not made available publicly. \
 Once access has been granted to GMDB, the pretrained model weights can be requested as well.
 
-The pretrained models by default are stored in a directory set by `--weights` (default:`./saved_models/`). Further, 
+The pretrained models by default are stored in a directory set by `--weight_dir` (default:`./saved_models/`). Further, 
 using the arguments `--model_a_path`, `--model_b_path` and `--model_c_path`, the paths within this directory need to be
 specified (default: uses all supplied model names). \
 When setting any of those to 'None' they will not be included in the ensemble.

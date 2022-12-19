@@ -138,3 +138,6 @@ runs/
 
 # saved model weights
 saved_models/
+
+# data
+data/
