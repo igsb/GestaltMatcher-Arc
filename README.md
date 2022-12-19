@@ -79,7 +79,7 @@ python detect_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_image
 
 FaceCropper command to align all faces based on the coordinates according to the ArcFace alignment used by insightface:
 ```
-python align_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_align/ --coords_file ../data/GestaltMatcherDB/<version>/gmdb_rot/_face_coords.csv
+python align_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_align/ --coords_file ../data/GestaltMatcherDB/<version>/gmdb_rot/face_coords.csv
 ```
 Note: the alignment will require the `scikit-image` package.\
 Make sure to replace the `<version>` in the paths with your GMDB version; highest version at the time of writing is v1.0.3

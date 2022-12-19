@@ -46,7 +46,7 @@ def parse_args():
                         help='random seed (default: 11)')
     parser.add_argument('--data_dir', default='../data/GestaltMatcherDB/v1.0.3/gmdb_align', dest='data_dir',
                         help='Path to the data directory containing the images to run the model on.')
-    parser.add_argument('--weight_dir', default='../data/GestaltMatcherDB/v1.0.3/gmdb_align', dest='weight_dir',
+    parser.add_argument('--weight_dir', default='./saved_models', dest='weight_dir',
                         help='Path to the data directory containing the model weights.')
 
     return parser.parse_args()
