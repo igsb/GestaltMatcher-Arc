@@ -294,21 +294,37 @@ def main():
     ## Evaluate
     # Get all synd_ids, dists, img_ids, subject_ids per image in gallery
     n=args.top_n
+
     args.gallery_preset = 'rare+freq'
     # all_ranks = evaluate(gallery_df=gallery_df, case_df=case_df, metadata_dir=args.metadata_dir)
     all_ranks = evaluate("all", metadata_dir=args.metadata_dir)
     all_ranks = np.array(all_ranks)
-    print(f"Top-5 results img_id (synd_id, dist, img_id, subject_id):\n{all_ranks[:,:,:n]}")
+
+    # TEST PRINT DISORDER NAMES
+    stuff = all_ranks[0,0,:5]
+    synds = pd.read_csv(os.path.join(args.metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
+                        delimiter='\t',
+                        usecols=['syndrome_id', 'syndrome_name'])
+    print(f"Top-{n} disorders:\n")
+    for aa in stuff:
+        print(f"{synds.iloc[aa].syndrome_name}\n")
+
+    print(f"\nTop-5 results img_id (synd_id, dist, img_id, subject_id):")
+    print(f"\n{all_ranks[:,:,:n]}")
 
     # Get all synd_ids, dists, img_ids, subject_ids per syndrome in gallery
     first_synd_ranks = get_first_synds(*all_ranks)
     first_synd_ranks = np.array(first_synd_ranks)
-    print(f"Top-5 synd_id results (synd_id, dist, img_id, subject_id):\n{first_synd_ranks[:,:,:n]}")
+    print(f"\nTop-5 synd_id results (synd_id, dist, img_id, subject_id):")
+    print(f"\n{first_synd_ranks[:,:,:n]}")
 
     # Get all synd_ids, dists, img_ids, subject_ids per subject in gallery
     first_subject_ranks = get_first_subject(*all_ranks)
     first_subject_ranks = np.array(first_subject_ranks)
-    print(f"Top-5 subject_id results (synd_id, dist, img_id, subject_id):\n{first_subject_ranks[:,:,:n]}")
+    print(f"\nTop-5 subject_id results (synd_id, dist, img_id, subject_id):")
+    print(f"\n{first_subject_ranks[:,:,:n]}")
+
+
 
 if __name__ == '__main__':
     main()

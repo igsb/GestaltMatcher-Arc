@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=11, metavar='S',
                         help='random seed (default: 11)')
 
-    parser.add_argument('--data', default=['data/test_cases_align'], dest='data', nargs='+',
+    parser.add_argument('--data', default=['data/cases_align'], dest='data', nargs='+',
                         help='Path to the data directory containing the images to run the model on.')
     parser.add_argument('--save_dir', default='data/encodings', dest='save_dir',
                         help='Path to the directory where to save the encodings to.')
@@ -185,7 +185,7 @@ def main():
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     device = torch.device("cuda" if use_cuda else "cpu")
-
+    
     if use_cuda:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
@@ -231,7 +231,7 @@ def main():
         if ".onnx" in weights:
             model = convert(weights).to(device)
         elif ".pth" in weights:
-            model = torch.load(weights).to(device)
+            model = torch.load(weights, map_location=device).to(device)
         print(f"Loaded model: {weights}")
         return model
 
@@ -255,7 +255,10 @@ def main():
     # original r100
     model3 = None
     if args.model_c_path != "None":
-        model3 = get_model(os.path.join(args.weight_dir, args.model_c_path), device=device)
+        try:
+            model3 = get_model(os.path.join(args.weight_dir, args.model_c_path), device=device)
+        except(PermissionError):
+            model3 = get_model(os.path.join(args.weight_dir, "glint360k_r100.pth"), device=device)
         model3.eval()
         models.append(model3)
 

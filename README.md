@@ -90,6 +90,24 @@ Lastly, you will need to specify the lookup table that was used during the model
 generated and saved when running the training. However, it is included in the directory under the name 
 `lookup_table_gmdb.txt` and is the default path of `--lut` (the argument used to set it).
 
+## Streamlit application
+We offer a very basic app created with `streamlit`.\
+To run it you will need to install the following package first: `pip install streamlit`.\
+Afterwards enter this into your terminal: `streamlit run streamlit.py`. 
+Thereafter, you can access it within you localhost (by default on port 8501).
+
+It can be used by simply inputting a photo and with a click on the button will output the top-5 disorders as well as 
+the top-5 most similar matches, most similar disorders, and most similar patients, including their `syndrome_id`, 
+`distance`, `img_id`, and `patient_id`, respectively.\
+In order for this to work you will need the trained models, and the gallery encodings in 
+`./data/encodings/all_encodings.csv`. 
+
+It is currently not optimized. However, addressing following TODO's will allow it to run more smoothly:
+- [ ] Replace the `os.system`/`os.popen`-calls with functions from those python scripts
+- [ ] Cache the models and the gallery encodings
+- [ ] Consider multi-threading or using GPU
+
+
 ## Contact
 Tzung-Chien Hsieh
 

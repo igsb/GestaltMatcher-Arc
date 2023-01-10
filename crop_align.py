@@ -63,7 +63,7 @@ def parse_args():
 
     parser.add_argument('--data', default=['data/cases'], dest='data', nargs='+',
                         help='Path to the data directory containing the images or single image to run the model on.')
-    parser.add_argument('--save_dir', default='data/test_cases_align', dest='save_dir',
+    parser.add_argument('--save_dir', default='data/cases_align', dest='save_dir',
                         help='Path to the data directory containing the images to run the model on, single file not supported.')
 
     return parser.parse_args()
@@ -76,6 +76,8 @@ def face_align_crop(net, img_paths, device):
     aligned_imgs = []
     skipped_imgs = []
     img_names = []
+
+    print(f"Cropping and aligning ~{len(img_paths)} ...")
     for img_path in img_paths:
         img_name = os.path.splitext(os.path.basename(img_path))[0]
         img_names.append(img_name)
@@ -135,6 +137,10 @@ def detect(net, img_path, img_name, device, save_dir='', first=False):
         new_img = cv2.resize(img, new_size)
 
         return new_img
+
+    if img_path == (None, []):
+        print(f"Error averted at {img_name}, skipping.")
+        return None, []
 
     original_size = img_raw_original.shape[0:2]
     img_raw = resize_square_aspect_cv2(img_raw_original, 640)  # Note: some images are too big resulting in an OOM-error
