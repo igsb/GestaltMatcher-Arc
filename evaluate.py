@@ -273,6 +273,17 @@ def get_encodings_set(encoding_dir, encoding_files):
     return prep_csv(df_main)
 
 
+def print_format_output(results):
+    synd_ids = results[0][0]
+    dists = results[1][0]
+    img_ids = results[2][0]
+    subject_ids = results[3][0]
+    print(f"Synd ids: {list(synd_ids)}")
+    print(f"Distances: {[round(i, 3) for i in dists]}")
+    print(f"Image ids: {[int(i) for i in img_ids]}")
+    print(f"Subject ids: {list(subject_ids)}")
+
+
 def main():
 
     # Seed everything
@@ -293,36 +304,37 @@ def main():
 
     ## Evaluate
     # Get all synd_ids, dists, img_ids, subject_ids per image in gallery
-    n=args.top_n
+    n = int(args.top_n)
 
     args.gallery_preset = 'rare+freq'
     # all_ranks = evaluate(gallery_df=gallery_df, case_df=case_df, metadata_dir=args.metadata_dir)
     all_ranks = evaluate("all", metadata_dir=args.metadata_dir)
     all_ranks = np.array(all_ranks)
 
+    start = time.time()
     # TEST PRINT DISORDER NAMES
-    stuff = all_ranks[0,0,:5]
+    stuff = all_ranks[0,0,:n]
     synds = pd.read_csv(os.path.join(args.metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
                         delimiter='\t',
                         usecols=['syndrome_id', 'syndrome_name'])
-    print(f"Top-{n} disorders:\n")
+    print(f"Top-{n} disorders:")
     for aa in stuff:
-        print(f"{synds.iloc[aa].syndrome_name}\n")
+        print(f"{synds.iloc[aa].syndrome_name}")
 
-    print(f"\nTop-5 results img_id (synd_id, dist, img_id, subject_id):")
-    print(f"\n{all_ranks[:,:,:n]}")
+    print(f"\nTop-{n} results on image level:")
+    print_format_output(all_ranks[:,:,:n])
 
     # Get all synd_ids, dists, img_ids, subject_ids per syndrome in gallery
     first_synd_ranks = get_first_synds(*all_ranks)
     first_synd_ranks = np.array(first_synd_ranks)
-    print(f"\nTop-5 synd_id results (synd_id, dist, img_id, subject_id):")
-    print(f"\n{first_synd_ranks[:,:,:n]}")
+    print(f"\nTop-{n} results on syndrome level:")
+    print_format_output(first_synd_ranks[:, :, :n])
 
     # Get all synd_ids, dists, img_ids, subject_ids per subject in gallery
     first_subject_ranks = get_first_subject(*all_ranks)
     first_subject_ranks = np.array(first_subject_ranks)
-    print(f"\nTop-5 subject_id results (synd_id, dist, img_id, subject_id):")
-    print(f"\n{first_subject_ranks[:,:,:n]}")
+    print(f"\nTop-{n} results on subject level:")
+    print_format_output(first_subject_ranks[:, :, :n])
 
 
 
