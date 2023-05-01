@@ -39,6 +39,11 @@ def parse_args():
                         help='List of case encodings to use. Default: []')
     parser.add_argument('--gallery_list', default=[], dest='gallery_list', nargs='*', #nargs='+',
                         help='List of gallery encodings to use. Default: []')
+
+    parser.add_argument('--output_dir', default='', dest='output_dir',
+                        help='Path to the directory for saving the results.')
+    parser.add_argument('--output_file', default='', dest='output_file',
+                        help='Output filename.')
     return parser.parse_args()
 args = parse_args()
 
@@ -284,6 +289,31 @@ def print_format_output(results):
     print(f"Subject ids: {list(subject_ids)}")
 
 
+def format_syndrome_json(results, synds_dict):
+    synd_ids = results[0][0]
+    dists = results[1][0]
+    img_ids = results[2][0]
+    subject_ids = results[3][0]
+    output_list = []
+    for synd_id, dist, image_id, subject_id in zip(synd_ids, dists, img_ids, subject_ids):
+        output = {'synd_id': synd_id,
+                  'syndrome_name': synds_dict[synd_id]['name'],
+                  'omim_id': synds_dict[synd_id]['omim'],
+                  'distance': dist,
+                  'image_id': image_id,
+                  'subject_id': subject_id}
+        output_list.append(output)
+
+    output_json = {'case_id': '1234', 'results': output_list}
+    return output_json
+
+
+def save_to_json(results, output_dir, output_file):
+    output_filename = os.path.join(output_dir, output_file)
+    with open(output_filename, "w") as f:
+        json.dump(results, f, indent=4, sort_keys=True)
+
+
 def main():
 
     # Seed everything
@@ -316,10 +346,12 @@ def main():
     stuff = all_ranks[0,0,:n]
     synds = pd.read_csv(os.path.join(args.metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
                         delimiter='\t',
-                        usecols=['syndrome_id', 'syndrome_name'])
+                        usecols=['syndrome_id', 'syndrome_name', 'OMIM'])
     print(f"Top-{n} disorders:")
     for aa in stuff:
         print(f"{synds.iloc[aa].syndrome_name}")
+
+    synds_dict = {row['syndrome_id']: {'name': row['syndrome_name'], 'omim': row['OMIM']} for _, row in synds.iterrows()}
 
     print(f"\nTop-{n} results on image level:")
     print_format_output(all_ranks[:,:,:n])
@@ -336,6 +368,12 @@ def main():
     print(f"\nTop-{n} results on subject level:")
     print_format_output(first_subject_ranks[:, :, :n])
 
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    output_json = format_syndrome_json(first_synd_ranks[:, :, :n], synds_dict)
+    save_to_json(output_json, args.output_dir, args.output_file)
 
 
 if __name__ == '__main__':
