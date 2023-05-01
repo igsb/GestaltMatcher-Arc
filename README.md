@@ -47,7 +47,7 @@ also be an image name or list of image names.
 
 The face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from 
 [Google Docs](https://drive.google.com/open?id=1oZRSG0ZegbVkVwUd8wUIQx8W7yfZ_ki1) with pw: fstq \
-If you don't have GPU, please use `--cpu` to run on cpu mode.
+If you don't have GPU, please use `--no_cuda` to run on cpu mode.
 
 ## Encode photos 
 With `python predict.py` you will encode all images in `--data` (default: `./data/cases_align`). This is quite free-form
@@ -89,6 +89,8 @@ Next, you need to specify the directory containing the GMDB metadata using `--me
 Lastly, you will need to specify the lookup table that was used during the model training, which is automatically 
 generated and saved when running the training. However, it is included in the directory under the name 
 `lookup_table_gmdb.txt` and is the default path of `--lut` (the argument used to set it).
+
+For the output file, please indicate the directory with `--output_dir` and the output filename with `--output_file`.
 
 ## Streamlit application
 We offer a very basic app created with `streamlit`.\
