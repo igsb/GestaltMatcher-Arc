@@ -45,6 +45,8 @@ def parse_args():
                         help='Path to the directory for saving the results.')
     parser.add_argument('--output_file', default='', dest='output_file',
                         help='Output filename.')
+    parser.add_argument('--silence', action='store_true', default=False,
+                        help='Disable printing the results.')
     return parser.parse_args()
 args = parse_args()
 
@@ -270,7 +272,7 @@ def print_format_output(results):
     print(f"Subject ids: {list(subject_ids)}")
 
 
-def format_syndrome_json(results, synds_dict):
+def format_syndrome_json(results, synds_dict, case_id=''):
     synd_ids = results[0][0]
     dists = results[1][0]
     img_ids = results[2][0]
@@ -290,7 +292,7 @@ def format_syndrome_json(results, synds_dict):
                   'subject_id': subject_id}
         output_list.append(output)
 
-    output_json = {'case_id': '1234', 'results': output_list}
+    output_json = {'case_id': case_id, 'results': output_list}
     return output_json
 
 
@@ -323,7 +325,10 @@ def main():
 
     ## Evaluate
     # Get all synd_ids, dists, img_ids, subject_ids per image in gallery
-    n = int(args.top_n)
+    if args.top_n == 'all':
+        n = None
+    else:
+        n = int(args.top_n)
 
     args.gallery_preset = 'rare+freq'
     # all_ranks = evaluate(gallery_df=gallery_df, case_df=case_df, metadata_dir=args.metadata_dir)
@@ -336,32 +341,36 @@ def main():
     synds = pd.read_csv(os.path.join(args.metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
                         delimiter='\t',
                         usecols=['syndrome_id', 'syndrome_name', 'OMIM'])
-    print(f"Top-{n} disorders:")
-    for aa in stuff:
-        print(f"{synds.iloc[aa].syndrome_name}")
+    if not args.silence:
+        print(f"Top-{n} disorders:")
+        for aa in stuff:
+            print(f"{synds.iloc[aa].syndrome_name}")
 
     synds_dict = {row['syndrome_id']: {'name': row['syndrome_name'], 'omim': row['OMIM']} for _, row in synds.iterrows()}
 
-    print(f"\nTop-{n} results on image level:")
-    print_format_output(all_ranks[:,:,:n])
+    if not args.silence:
+        print(f"\nTop-{n} results on image level:")
+        print_format_output(all_ranks[:,:,:n])
 
     # Get all synd_ids, dists, img_ids, subject_ids per syndrome in gallery
     first_synd_ranks = get_first_synds(*all_ranks)
     first_synd_ranks = np.array(first_synd_ranks)
-    print(f"\nTop-{n} results on syndrome level:")
-    print_format_output(first_synd_ranks[:, :, :n])
+    if not args.silence:
+        print(f"\nTop-{n} results on syndrome level:")
+        print_format_output(first_synd_ranks[:, :, :n])
 
     # Get all synd_ids, dists, img_ids, subject_ids per subject in gallery
     first_subject_ranks = get_first_subject(*all_ranks)
     first_subject_ranks = np.array(first_subject_ranks)
-    print(f"\nTop-{n} results on subject level:")
-    print_format_output(first_subject_ranks[:, :, :n])
+    if not args.silence:
+        print(f"\nTop-{n} results on subject level:")
+        print_format_output(first_subject_ranks[:, :, :n])
 
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-
-    output_json = format_syndrome_json(first_synd_ranks[:, :, :n], synds_dict)
+    case_id = os.path.splitext(args.output_file)[0]
+    output_json = format_syndrome_json(first_synd_ranks[:, :, :n], synds_dict, case_id)
     save_to_json(output_json, args.output_dir, args.output_file)
 
 

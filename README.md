@@ -77,14 +77,18 @@ With `evaluate.py` you can evaluate case encodings using gallery encodings.
 
 There are several ways to load the encodings, either using a single file containing all encodings, or separate encoding-
 files (e.g. after using `--seperate_outputs` for `predict.py`) for each image. \
-When using separate encoding files use `--separate_files_gallery` and `--separate_files_cases`, depending on if you used
-separate outputs for both gallery and cases. When specifying these flags you can use either all encodings in the 
-directories given by `--gallery_dir` and `--case_dir`, or you can give a list of filenames within those directories 
-using `--gallery_list` and `--case_list`.\
+Use `--case_input` to specify the test encoding. You can use single file or a folder as input.
+When you specify the folder, we will parse all the files in the folder as test images.
+For the gallery, please specify with `--gallery_input`, you can use single file or a folder as input.
+When you specify the folder, we will parse all the files in the folder as gallery images.
+You can further use `--gallery_list_file` to specify the image name you want to include in the gallery.
 If you'd rather use only two file, for all gallery encodings and all case encodings, you simply specify only those
 filenames within their respective directories (and do NOT use `--separate_files_<x>`).
 
 Next, you need to specify the directory containing the GMDB metadata using `--metadata_dir`.
+
+For the output format, you can use `--top_n` to choose the number of entries in the output file.
+If you choose `--top_n all`, it will output all the syndromes/genes in the gallery.
 
 Lastly, you will need to specify the lookup table that was used during the model training, which is automatically 
 generated and saved when running the training. However, it is included in the directory under the name 
