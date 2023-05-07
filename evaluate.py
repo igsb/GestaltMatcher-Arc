@@ -224,9 +224,10 @@ def get_first_subject(ranked_synd_ids, ranked_mean_dists, ranked_img_ids, ranked
 
 def get_encodings_set(encoding_input, encoding_list=[]):
     # Helper function to correct DataFrame
-    def prep_csv(df):
+    def prep_csv(df, is_pickle=False):
         df = df.groupby('img_name').agg(lambda x: list(x)).reset_index()
-        df.representations = df.representations.apply(lambda x: np.array([json.loads(i) for i in x]))
+        if not is_pickle:
+            df.representations = df.representations.apply(lambda x: np.array([json.loads(i) for i in x]))
         #df.class_conf = df.class_conf.apply(lambda x: [json.loads(i) for i in x])
         df.img_name = df.img_name.apply(lambda x: x.split('_')[0])
         return df
@@ -240,7 +241,7 @@ def get_encodings_set(encoding_input, encoding_list=[]):
     # single file
     if not is_separate:
         if os.path.splitext(encoding_input)[-1] == '.pkl':
-            df_main = pd.read_pickle(encoding_input)
+            df_main = prep_csv(pd.read_pickle(encoding_input), is_pickle=True)
         else:  # is csv
             df_main = prep_csv(pd.read_csv(encoding_input, delimiter=';'))
     else:
@@ -254,7 +255,7 @@ def get_encodings_set(encoding_input, encoding_list=[]):
                 # ignore if not in the list
                 continue
             if suffix_name == '.pkl':
-                df_part = pd.read_pickle(os.path.join(encoding_input, filename))
+                df_part = prep_csv(pd.read_pickle(os.path.join(encoding_input, filename)), is_pickle=True)
             else:  # is csv
                 df_part = prep_csv(pd.read_csv(os.path.join(encoding_input, filename), delimiter=';'))
             df_main = pd.concat([df_main, df_part])
@@ -303,7 +304,7 @@ def save_to_json(results, output_dir, output_file):
 
 
 def main():
-
+    start_time = time.time()
     # Seed everything
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -322,7 +323,7 @@ def main():
 
     # args.separate_files_cases
     case_df = get_encodings_set(args.case_input)
-
+    parse_finished_time = time.time()
     ## Evaluate
     # Get all synd_ids, dists, img_ids, subject_ids per image in gallery
     if args.top_n == 'all':
@@ -335,7 +336,7 @@ def main():
     all_ranks = evaluate(gallery_df, case_df, "all", metadata_dir=args.metadata_dir)
     all_ranks = np.array(all_ranks)
 
-    start = time.time()
+    evaluate_finished_time = time.time()
     # TEST PRINT DISORDER NAMES
     stuff = all_ranks[0,0,:n]
     synds = pd.read_csv(os.path.join(args.metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
@@ -372,7 +373,12 @@ def main():
     case_id = os.path.splitext(args.output_file)[0]
     output_json = format_syndrome_json(first_synd_ranks[:, :, :n], synds_dict, case_id)
     save_to_json(output_json, args.output_dir, args.output_file)
+    output_finished_time = time.time()
 
+    print('Parse: {:.2f}s'.format(parse_finished_time-start_time))
+    print('Evaluate: {:.2f}s'.format(evaluate_finished_time-parse_finished_time))
+    print('Format: {:.2f}s'.format(output_finished_time-evaluate_finished_time))
+    print('Total: {:.2f}s'.format(output_finished_time-start_time))
 
 if __name__ == '__main__':
     main()
