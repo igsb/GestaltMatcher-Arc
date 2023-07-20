@@ -61,12 +61,18 @@ def main():
 
     # single file
     if single_file:
+        print("Start processing {} file.".format(1))
         analyze_image(args.case_input, args.output_dir, predict_URL)
+        print("Finished (1/1): {}".format(args.case_input))
     else:
         input_files = os.listdir(args.case_input)
+        print("Start processing {} file.".format(len(input_files)))
+        count = 1
         for input_file in input_files:
             filename = os.path.join(args.case_input, input_file)
             analyze_image(filename, args.output_dir, predict_URL)
+            print("Finished ({}/{}): {}".format(count, len(input_files), filename))
+            count += 1
 
     output_finished_time = time.time()
     print('Total running time: {:.2f}s'.format(output_finished_time - start_time))

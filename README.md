@@ -96,24 +96,118 @@ generated and saved when running the training. However, it is included in the di
 
 For the output file, please indicate the directory with `--output_dir` and the output filename with `--output_file`.
 
-## Streamlit application
-We offer a very basic app created with `streamlit`.\
-To run it you will need to install the following package first: `pip install streamlit`.\
-Afterwards enter this into your terminal: `streamlit run streamlit.py`. 
-Thereafter, you can access it within you localhost (by default on port 8501).
+## GestaltMatcher REST api
+We can host GestaltMatcher as a service via REST api. You can build the Docker image and host GM service in your local machine.
+### Requirements
+Please contact us to obtain the following files and store them in the corresponding paths.
 
-It can be used by simply inputting a photo and with a click on the button will output the top-5 disorders as well as 
-the top-5 most similar matches, most similar disorders, and most similar patients, including their `syndrome_id`, 
-`distance`, `img_id`, and `patient_id`, respectively.\
-In order for this to work you will need the trained models, and the gallery encodings in 
-`./data/encodings/all_encodings.csv`. 
+**Pretrained model**
+Save the following files in ./saved_models
+1. Resnet50_Final.pth (for the face alignment)
+2. s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
+3. s2_glint360k_r100_512d_gmdb__v1.0.3_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
+4. glint360k_r100.onnx (model 3 for the encoding)
 
-It is currently not optimized. However, addressing following TODO's will allow it to run more smoothly:
-- [ ] Replace the `os.system`/`os.popen`-calls with functions from those python scripts
-- [ ] Cache the models and the gallery encodings
-- [ ] Consider multi-threading or using GPU
+**Metadata**
+Save the following file in ./data
+1. image_gene_and_syndrome_metadata_v1.0.3.p (image metadata)
+
+**Encodings**
+Save the following file in ./data/gallery_encodings
+1. GMDB_encodings_v1.0.3.pkl (image encodings)
+
+### Build and run docker image
+Build docker image: `docker build -t gm-api .`
+
+Run and listen the request in localhost:5000:`docker run -p 5000:5000 gm-api`
+
+### Send request
+You can send a single image or multiple images in a folder to the api via **send_image_api.py**.
+```
+python send_image_api.py --case_input demo_images/cdls_demo.png --otuput_dir output
+
+# arguments:
+--case_input :input single file or dir containing multiple images
+--output_dir :output dir
+--url :url for the service, default: localhost
+--port :port for the service, default: 5000
+```
+
+### Results
+The results will be saved in a file with JSON format. There are three information stored in the file.
+1. case_id: the original filename without file extension
+2. suggested_genes_list: the ranked gene list sorted by the distance
+3. suggested_syndromes_list: the ranked syndrome list sorted by the distance
+
+#### suggested_genes_list (for variants prioritization)
+A gene list sorted by the distance in ascending order which can be used for variant prioritization.
+* **distance** is the cosine distance to the nearest image with the gene in the gallery. A smaller distance indicates a higher similarity.
+* **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
+* **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
+* **gene_entrez_id and gene_name** the gene id and gene name.
+
+**Note:** some syndromes have no gene associated because they are the chromosomal abnormality or huge deletion that cover
+multiple genes. We still keep them in the entry. For example, WILLIAMS-BEUREN SYNDROME; WBS has no gene associated in OMIM, so we use gene_name: WILLIAMS-BEUREN SYNDROME; WBS and gene_entrez_id: null for this entry.
+Please filter out this kind of entry with null gene_entrez_id if you do need them.  
+
+```angular2html
+    "suggested_genes_list": [
+        {
+            "distance": 0.44,
+            "image_id": "4883",
+            "gene_entrez_id": "25836",
+            "gene_name": "NIPBL",
+            "subject_id": "3546"
+        },
+        {
+            "distance": 0.516,
+            "image_id": "8513",
+            "gene_entrez_id": "8243",
+            "gene_name": "SMC1A",
+            "subject_id": "5656"
+        },
+        {
+            "distance": 0.516,
+            "image_id": "8513",
+            "gene_entrez_id": "55869",
+            "gene_name": "HDAC8",
+            "subject_id": "5656"
+        },...
+    ]
+```
 
 
+#### suggested_syndromes_list
+A syndrome list sorted by the distance in ascending order.
+* **distance** is the cosine distance to the nearest image with the gene in the gallery. A smaller distance indicates a higher similarity.
+* **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
+* **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
+* **syndrome_name and omim_id** the syndrome name and omim id.
+```angular2html
+    "suggested_syndromes_list": [
+        {
+            "syndrome_name": "Cornelia de Lange syndrome",
+            "omim_id": 122470,
+            "distance": 0.44,
+            "image_id": "4883",
+            "subject_id": "3546"
+        },
+        {
+            "syndrome_name": "DDX23",
+            "omim_id": "",
+            "distance": 0.575,
+            "image_id": "8998",
+            "subject_id": "5949"
+        },
+        {
+            "syndrome_name": "INTELLECTUAL DEVELOPMENTAL DISORDER, X-LINKED, SYNDROMIC, NASCIMENTO TYPE; MRXSN",
+            "omim_id": 300860,
+            "distance": 0.641,
+            "image_id": "5014",
+            "subject_id": "3650"
+        },...
+    ]
+```
 ## Contact
 Tzung-Chien Hsieh
 
