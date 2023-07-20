@@ -102,6 +102,7 @@ We can host GestaltMatcher as a service via REST api. You can build the Docker i
 Please contact us to obtain the following files and store them in the corresponding paths.
 
 **Pretrained model**
+
 Save the following files in ./saved_models
 1. Resnet50_Final.pth (for the face alignment)
 2. s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
@@ -109,10 +110,12 @@ Save the following files in ./saved_models
 4. glint360k_r100.onnx (model 3 for the encoding)
 
 **Metadata**
+
 Save the following file in ./data
 1. image_gene_and_syndrome_metadata_v1.0.3.p (image metadata)
 
 **Encodings**
+
 Save the following file in ./data/gallery_encodings
 1. GMDB_encodings_v1.0.3.pkl (image encodings)
 
