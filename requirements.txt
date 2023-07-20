@@ -1,6 +1,6 @@
 albumentations==1.2.1
 matplotlib==3.5.2
-numpy==1.21.5
+numpy==1.25.0
 onnx2torch==1.4.1
 opencv_python_headless==4.6.0.66
 pandas==1.4.3
