@@ -103,7 +103,7 @@ Please contact us to obtain the following files and store them in the correspond
 
 **Pretrained model**
 
-Save the following files in ./saved_models
+Save the following files in ./saved_models/
 1. Resnet50_Final.pth (for the face alignment)
 2. s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
 3. s2_glint360k_r100_512d_gmdb__v1.0.3_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
@@ -111,13 +111,13 @@ Save the following files in ./saved_models
 
 **Metadata**
 
-Save the following file in ./data
+Save the following file in ./data/
 1. image_gene_and_syndrome_metadata_v1.0.3.p (image metadata)
 
 **Encodings**
 
-Save the following file in ./data/gallery_encodings
-1. GMDB_encodings_v1.0.3.pkl (image encodings)
+Save the following file in ./data/gallery_encodings/
+1. GMDB_gallery_encodings_v1.0.3.pkl (image encodings)
 
 ### Build and run docker image
 Build docker image: `docker build -t gm-api .`
