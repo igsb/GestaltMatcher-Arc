@@ -270,12 +270,13 @@ def predict(test_df, _gallery_df, images_synds_dict, images_genes_dict, genes_me
     output_finished_time = time.time()
 
     #print('Parse: {:.2f}s'.format(parse_finished_time-start_time))
-    #print('Evaluate: {:.2f}s'.format(evaluate_finished_time-parse_finished_time))
+    print('Evaluate: {:.2f}s'.format(evaluate_finished_time-parse_finished_time))
     #print('Get synds: {:.2f}s'.format(get_synds_time-evaluate_finished_time))
     #print('Get genes: {:.2f}s'.format(get_genes_time-get_synds_time))
     #print('Format: {:.2f}s'.format(output_finished_time-get_genes_time))
     #print('Total: {:.2f}s'.format(output_finished_time-start_time))
-    output = {"suggested_genes_list": gene_output_list,
+    output = {"model_version": "v1.0.3",
+              "suggested_genes_list": gene_output_list,
               "suggested_syndromes_list": synd_output_list}
     return output
 
