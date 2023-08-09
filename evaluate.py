@@ -9,6 +9,7 @@ import json
 import os
 import random
 import time
+import math
 from glob import glob
 
 import numpy as np
@@ -25,20 +26,27 @@ def parse_args():
     parser.add_argument('--lut', default='lookup_table_gmdb.txt', dest='lut',
                         help='Path to the lookup table.')
 
-    parser.add_argument('--case_dir', default='data', dest='case_dir',
-                        help='Path to the directory containing the case encodings.')
+    parser.add_argument('--case_input', default='data', dest='case_input',
+                        help='Path to the directory containing the case encodings or the single file containing the gallery encodings.')
     parser.add_argument('--metadata_dir', default='', dest='metadata_dir',
                         help='Path to the directory containing the gallery set metadata.')
-    parser.add_argument('--gallery_dir', default='', dest='gallery_dir',
-                        help='Path to the directory containing the gallery encodings.')
+    parser.add_argument('--gallery_input', default='', dest='gallery_input',
+                        help='Path to the directory containing the gallery encodings or the single file containing the gallery encodings.')
 
     parser.add_argument('--top_n', default=5, dest='top_n',
                         help='Top-N results to show per image/encoding')
 
-    parser.add_argument('--case_list', default=[], dest='case_list', nargs='*', #nargs='+',
-                        help='List of case encodings to use. Default: []')
-    parser.add_argument('--gallery_list', default=[], dest='gallery_list', nargs='*', #nargs='+',
-                        help='List of gallery encodings to use. Default: []')
+    # use a file to store the list
+    parser.add_argument('--gallery_list_file', default='', dest='gallery_list_file',
+                        help='The filename contains the list of files we want to include in the gallery. '+
+                             'If you want to use all files in the gallery_dir, please do not use this parameter.')
+
+    parser.add_argument('--output_dir', default='', dest='output_dir',
+                        help='Path to the directory for saving the results.')
+    parser.add_argument('--output_file', default='', dest='output_file',
+                        help='Output filename.')
+    parser.add_argument('--silence', action='store_true', default=False,
+                        help='Disable printing the results.')
     return parser.parse_args()
 args = parse_args()
 
@@ -102,7 +110,7 @@ args = parse_args()
 
 
 # Used to belong to evaluate.py - keeping a backup here in case we need it ...
-def evaluate(gallery='all', metadata_dir=''):
+def evaluate(all_df, case_df, gallery='all', metadata_dir=''):
     synds = pd.read_csv(os.path.join(metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
                         delimiter='\t',
                         usecols=['syndrome_id', 'syndrome_name'])
@@ -111,20 +119,6 @@ def evaluate(gallery='all', metadata_dir=''):
     with open(args.lut, 'r') as f:
         line = f.readlines()[1]
         synd_lookup_table = np.array(json.loads(line))
-
-    def prep_csv(df):
-        df = pd.read_csv(df, delimiter=';')
-        df = df.groupby('img_name').agg(lambda x: list(x)).reset_index()
-        df.representations = df.representations.apply(lambda x: np.array([json.loads(i) for i in x]))
-        #df.class_conf = df.class_conf.apply(lambda x: [json.loads(i) for i in x])
-        df.img_name = df.img_name.apply(lambda x: x.split('_')[0])
-        return df
-
-    # Get all predictions
-    all_df = prep_csv(os.path.join(args.gallery_dir, "all_encodings.csv"))  # maybe rename in the future ...
-
-    # Get case predictions
-    case_df = prep_csv(os.path.join(args.case_dir, "case_encodings.csv"))
 
     # Get gallery set info
     gallery_df1 = pd.read_csv(os.path.join(metadata_dir, 'gmdb_frequent_gallery_images_v1.0.3.csv'))
@@ -228,49 +222,44 @@ def get_first_subject(ranked_synd_ids, ranked_mean_dists, ranked_img_ids, ranked
     return synds_all, dists_all, imgs_all, subjects_all
 
 
-def get_encodings_set(encoding_dir, encoding_files):
+def get_encodings_set(encoding_input, encoding_list=[]):
     # Helper function to correct DataFrame
-    def prep_csv(df):
+    def prep_csv(df, is_pickle=False):
         df = df.groupby('img_name').agg(lambda x: list(x)).reset_index()
-        df.representations = df.representations.apply(lambda x: np.array([json.loads(i) for i in x]))
+        if not is_pickle:
+            df.representations = df.representations.apply(lambda x: np.array([json.loads(i) for i in x]))
         #df.class_conf = df.class_conf.apply(lambda x: [json.loads(i) for i in x])
         df.img_name = df.img_name.apply(lambda x: x.split('_')[0])
         return df
 
-    # First check if we're dealing with *.pkl-files or *.csv-files
-    is_pickle = False
-    if os.path.splitext(encoding_files[0])[-1] == '.pkl':
-        is_pickle = True
-
-    # Next check if we use one large file or several small ones
-    is_separate = False
-    if len(encoding_files) > 1:
-        is_separate = True
-
-    # Finally, check if it's a directory instead of a file
-    if os.path.isdir(os.path.join(encoding_dir, encoding_files[0])):
-        is_dir = True
-        is_separate = True
+    # Check whether use a single file or all files in the directory
+    is_separate = True
+    if os.path.isfile(encoding_input):
+        is_separate = False
 
     df_main = None
     # single file
     if not is_separate:
-        if is_pickle:
-            df_main = pd.read_pickle(os.path.join(encoding_dir, encoding_files[0]))
+        if os.path.splitext(encoding_input)[-1] == '.pkl':
+            df_main = prep_csv(pd.read_pickle(encoding_input), is_pickle=True)
         else:  # is csv
-            df_main = prep_csv(pd.read_csv(os.path.join(encoding_dir, encoding_files[0]), delimiter=';'))
-        return df_main
-
-    # else: separate files or dir
-    if is_dir:
-        encoding_files = glob(f"{os.path.join(os.path.join(encoding_dir, encoding_files[0]))}/*")
-    for file in encoding_files:
-        if is_pickle:
-            df_part = pd.read_pickle(os.path.join(encoding_dir, file))
-        else:  # is csv
-            df_part = prep_csv(pd.read_csv(os.path.join(encoding_dir, file), delimiter=';'))
-        df_main = pd.concat([df_main, df_part])
-    return prep_csv(df_main)
+            df_main = prep_csv(pd.read_csv(encoding_input, delimiter=';'))
+    else:
+        # else: separate files or dir
+        encoding_files = os.listdir(encoding_input)
+        for filename in encoding_files:
+            names = os.path.splitext(filename)
+            prefix_name = names[0]
+            suffix_name = names[-1]
+            if len(encoding_list) > 0 and prefix_name not in encoding_list:
+                # ignore if not in the list
+                continue
+            if suffix_name == '.pkl':
+                df_part = prep_csv(pd.read_pickle(os.path.join(encoding_input, filename)), is_pickle=True)
+            else:  # is csv
+                df_part = prep_csv(pd.read_csv(os.path.join(encoding_input, filename), delimiter=';'))
+            df_main = pd.concat([df_main, df_part])
+    return df_main
 
 
 def print_format_output(results):
@@ -284,8 +273,38 @@ def print_format_output(results):
     print(f"Subject ids: {list(subject_ids)}")
 
 
-def main():
+def format_syndrome_json(results, synds_dict, case_id=''):
+    synd_ids = results[0][0]
+    dists = results[1][0]
+    img_ids = results[2][0]
+    subject_ids = results[3][0]
+    output_list = []
+    for synd_id, dist, image_id, subject_id in zip(synd_ids, dists, img_ids, subject_ids):
+        omim_id = synds_dict[synd_id]['omim']
+        if math.isnan(omim_id):
+            omim_id = 0
+        else:
+            omim_id = int(omim_id)
+        output = {'syndrome_id': synd_id,
+                  'syndrome_name': synds_dict[synd_id]['name'],
+                  'omim_id': omim_id,
+                  'distance': round(dist, 3),
+                  'image_id': image_id,
+                  'subject_id': subject_id}
+        output_list.append(output)
 
+    output_json = {'case_id': case_id, 'results': output_list}
+    return output_json
+
+
+def save_to_json(results, output_dir, output_file):
+    output_filename = os.path.join(output_dir, output_file)
+    with open(output_filename, "w") as f:
+        json.dump(results, f, indent=4, sort_keys=True)
+
+
+def main():
+    start_time = time.time()
     # Seed everything
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -297,46 +316,69 @@ def main():
 
     # Load and combine all encodings
     # args.separate_files_gallery
-    gallery_df = get_encodings_set(args.gallery_dir, args.gallery_list)
+    gallery_list = []
+    if args.gallery_list_file:
+        gallery_list = pd.read_csv(args.gallery_list_file)['names'].values
+    gallery_df = get_encodings_set(args.gallery_input, gallery_list)
 
     # args.separate_files_cases
-    case_df = get_encodings_set(args.case_dir, args.case_list)
-
+    case_df = get_encodings_set(args.case_input)
+    parse_finished_time = time.time()
     ## Evaluate
     # Get all synd_ids, dists, img_ids, subject_ids per image in gallery
-    n = int(args.top_n)
+    if args.top_n == 'all':
+        n = None
+    else:
+        n = int(args.top_n)
 
     args.gallery_preset = 'rare+freq'
     # all_ranks = evaluate(gallery_df=gallery_df, case_df=case_df, metadata_dir=args.metadata_dir)
-    all_ranks = evaluate("all", metadata_dir=args.metadata_dir)
+    all_ranks = evaluate(gallery_df, case_df, "all", metadata_dir=args.metadata_dir)
     all_ranks = np.array(all_ranks)
 
-    start = time.time()
+    evaluate_finished_time = time.time()
     # TEST PRINT DISORDER NAMES
     stuff = all_ranks[0,0,:n]
     synds = pd.read_csv(os.path.join(args.metadata_dir, 'gmdb_syndromes_v1.0.3.tsv'),
                         delimiter='\t',
-                        usecols=['syndrome_id', 'syndrome_name'])
-    print(f"Top-{n} disorders:")
-    for aa in stuff:
-        print(f"{synds.iloc[aa].syndrome_name}")
+                        usecols=['syndrome_id', 'syndrome_name', 'OMIM'])
+    if not args.silence:
+        print(f"Top-{n} disorders:")
+        for aa in stuff:
+            print(f"{synds.iloc[aa].syndrome_name}")
 
-    print(f"\nTop-{n} results on image level:")
-    print_format_output(all_ranks[:,:,:n])
+    synds_dict = {row['syndrome_id']: {'name': row['syndrome_name'], 'omim': row['OMIM']} for _, row in synds.iterrows()}
+
+    if not args.silence:
+        print(f"\nTop-{n} results on image level:")
+        print_format_output(all_ranks[:,:,:n])
 
     # Get all synd_ids, dists, img_ids, subject_ids per syndrome in gallery
     first_synd_ranks = get_first_synds(*all_ranks)
     first_synd_ranks = np.array(first_synd_ranks)
-    print(f"\nTop-{n} results on syndrome level:")
-    print_format_output(first_synd_ranks[:, :, :n])
+    if not args.silence:
+        print(f"\nTop-{n} results on syndrome level:")
+        print_format_output(first_synd_ranks[:, :, :n])
 
     # Get all synd_ids, dists, img_ids, subject_ids per subject in gallery
     first_subject_ranks = get_first_subject(*all_ranks)
     first_subject_ranks = np.array(first_subject_ranks)
-    print(f"\nTop-{n} results on subject level:")
-    print_format_output(first_subject_ranks[:, :, :n])
+    if not args.silence:
+        print(f"\nTop-{n} results on subject level:")
+        print_format_output(first_subject_ranks[:, :, :n])
 
 
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    case_id = os.path.splitext(args.output_file)[0]
+    output_json = format_syndrome_json(first_synd_ranks[:, :, :n], synds_dict, case_id)
+    save_to_json(output_json, args.output_dir, args.output_file)
+    output_finished_time = time.time()
+
+    print('Parse: {:.2f}s'.format(parse_finished_time-start_time))
+    print('Evaluate: {:.2f}s'.format(evaluate_finished_time-parse_finished_time))
+    print('Format: {:.2f}s'.format(output_finished_time-evaluate_finished_time))
+    print('Total: {:.2f}s'.format(output_finished_time-start_time))
 
 if __name__ == '__main__':
     main()

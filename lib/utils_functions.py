@@ -1,5 +1,5 @@
 import random
-
+import base64
 import torch
 import cv2
 import numpy as np
@@ -130,4 +130,18 @@ def resize_crop_with_ratio_squared(img, bbox, max_dim_size, pad_color=0, interpo
     img = A.crop(img, *new_bbox)
     img = A.resize(img, max_dim_size, max_dim_size, interpolation=interpolation)
 
+    return img
+
+
+def readb64(uri):
+    # encoded_data = uri.split(',')[1]
+    nparr = np.fromstring(base64.b64decode(uri), np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return img
+
+
+def encodeb64(uri):
+    # encoded_data = uri.split(',')[1]
+    nparr = np.fromstring(base64.b64decode(uri), np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return img
