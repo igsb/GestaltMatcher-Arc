@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from lib.face_alignment import *
 from contextlib import asynccontextmanager
 from lib.utils_functions import readb64, encodeb64
+from datetime import datetime
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
     _models = get_models()
     _cropper_model, _device = load_cropper_model()
     # Load synd dict
-    with open(os.path.join("data", "image_gene_and_syndrome_metadata_v1.0.3.p"), "rb") as f:
+    with open(os.path.join("data", "image_gene_and_syndrome_metadata_10082023.p"), "rb") as f:
         data = pickle.load(f)
     _images_synds_dict = data["disorder_level_metadata"]
     _images_genes_dict = data["gene_level_metadata"]
@@ -41,8 +42,17 @@ class Img(BaseModel):
 @app.post("/predict")
 async def predict_endpoint(image: Img):
     img = readb64(image.img)
-    start_time = time.time()
 
+    start_time = time.time()
+    timestamp = time.time()
+
+    # Convert the timestamp to a datetime object
+    datetime_obj = datetime.fromtimestamp(timestamp)
+
+    # Format the datetime object as a readable string
+    formatted_time = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
+
+    print("Formatted Time:", formatted_time)
     aligned_img = face_align_crop(_cropper_model, img, _device)
     align_time = time.time()
 

@@ -221,7 +221,7 @@ def save_to_json(results, output_dir, output_file):
 
 def get_gallery_encodings_set(images_synds_dict):
     gallery_list = []
-    gallery_input = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_v1.0.3.pkl')
+    gallery_input = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_10082023.pkl')
     gallery_df = get_encodings_set(gallery_input, gallery_list)
     image_ids = [str(i) for i in images_synds_dict.keys()]
     gallery_df = gallery_df[gallery_df["img_name"].isin(image_ids)]
