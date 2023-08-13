@@ -276,6 +276,7 @@ def predict(test_df, _gallery_df, images_synds_dict, images_genes_dict, genes_me
     #print('Format: {:.2f}s'.format(output_finished_time-get_genes_time))
     #print('Total: {:.2f}s'.format(output_finished_time-start_time))
     output = {"model_version": "v1.0.3",
+              "gallery_version": "10.08.2023",
               "suggested_genes_list": gene_output_list,
               "suggested_syndromes_list": synd_output_list}
     return output

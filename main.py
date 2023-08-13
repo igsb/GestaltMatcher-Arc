@@ -53,18 +53,25 @@ async def predict_endpoint(image: Img):
     formatted_time = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
 
     print("Formatted Time:", formatted_time)
-    aligned_img = face_align_crop(_cropper_model, img, _device)
+    try:
+        aligned_img = face_align_crop(_cropper_model, img, _device)
+    except Exception as e:
+        return {"message": "Face alignment error."}
     align_time = time.time()
-
-    encoding = encode(_models, 'cpu', aligned_img)
+    try:
+        encoding = encode(_models, 'cpu', aligned_img)
+    except Exception as e:
+        return {"message": "Encoding error."}
     encode_time = time.time()
-
-    result = predict(encoding,
-                     _gallery_df,
-                     _images_synds_dict,
-                     _images_genes_dict,
-                     _genes_metadata_dict,
-                     _synds_metadata_dict)
+    try:
+        result = predict(encoding,
+                         _gallery_df,
+                         _images_synds_dict,
+                         _images_genes_dict,
+                         _genes_metadata_dict,
+                         _synds_metadata_dict)
+    except Exception as e:
+        return {"message": "Evaluation error."}
     finished_time = time.time()
 
     print('Crop: {:.2f}s'.format(align_time-start_time))
