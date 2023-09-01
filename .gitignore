@@ -104,6 +104,7 @@ celerybeat.pid
 .env
 .venv
 env/
+gm_env/
 venv/
 ENV/
 env.bak/
@@ -141,3 +142,5 @@ saved_models/
 
 # data
 data/
+*json
+*csv

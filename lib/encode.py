@@ -28,15 +28,22 @@ def preprocess(img, img_size=112, gray=False, flip=False):
     return img
 
 
-def encode(models, device, img):
+def encode(models, device, img, flip_flag=True, gray_flag=True):
     # initialize result
     result = pd.DataFrame(columns=["img_name", "model", "flip", "gray", "class_conf", "representations"])
-
+    if flip_flag:
+        flip_modes = [False, True]
+    else:
+        flip_modes = [False]
+    if gray_flag:
+        gray_modes = [False, True]
+    else:
+        gray_modes = [False]
     img_name = 'input'
     with torch.no_grad():
         for idx, model in enumerate(models):
-            for flip in [False, True]:
-                for gray in [False, True]:
+            for flip in flip_modes:
+                for gray in gray_modes:
                     img_p = preprocess(img,
                                        gray=gray,
                                        flip=flip

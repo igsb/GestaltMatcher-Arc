@@ -187,7 +187,6 @@ def detect(net, img_raw_original, device, first=False):
     dets = np.concatenate((dets, landms), axis=1)
     # Skip if we don't find any face
     if len(dets) == 0:
-        print(f"Did not find any face in image {img_name}.. skipping.")
         return None, []
 
     # Own addition to keep only the single most confident detection (we want single faces)
