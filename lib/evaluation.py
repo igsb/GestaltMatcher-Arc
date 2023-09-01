@@ -189,6 +189,7 @@ def format_syndrome_json(results, synds_metadata_dict, images_dict, case_id=''):
         output = {'syndrome_name': synds_metadata_dict[int(synd_id)]['disorder_name'],
                   'omim_id': synds_metadata_dict[int(synd_id)]['omim_id'],
                   'distance': round(float(dist), 3),
+                  'gestalt_score': round(float(dist), 3),
                   'image_id': image_id,
                   'subject_id': str(images_dict[int(image_id)]['patient_id'])}
         output_list.append(output)
@@ -203,10 +204,11 @@ def format_gene_json(results, genes_metadata_dict, images_dict, case_id=''):
 
     output_list = []
     for gene, dist, image_id in zip(genes, dists, img_ids):
-        output = {'distance': round(float(dist), 3),
-                  'image_id': image_id,
+        output = {'gene_name': genes_metadata_dict[int(gene)]['gene_name'],
                   'gene_entrez_id': genes_metadata_dict[int(gene)]['gene_entrez_id'],
-                  'gene_name': genes_metadata_dict[int(gene)]['gene_name'],
+                  'distance': round(float(dist), 3),
+                  'gestalt_score': round(float(dist), 3),
+                  'image_id': image_id,
                   'subject_id': str(images_dict[int(image_id)][0]['patient_id'])}
         output_list.append(output)
 

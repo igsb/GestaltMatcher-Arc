@@ -59,7 +59,7 @@ async def predict_endpoint(image: Img):
         return {"message": "Face alignment error."}
     align_time = time.time()
     try:
-        encoding = encode(_models, 'cpu', aligned_img)
+        encoding = encode(_models, 'cpu', aligned_img, False, False)
     except Exception as e:
         return {"message": "Encoding error."}
     encode_time = time.time()
