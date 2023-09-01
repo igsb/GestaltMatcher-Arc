@@ -70,24 +70,27 @@ Please filter out this kind of entry with null gene_entrez_id if you do need the
 ```angular2html
     "suggested_genes_list": [
         {
-            "distance": 0.44,
-            "image_id": "4883",
-            "gene_entrez_id": "25836",
             "gene_name": "NIPBL",
+            "gene_entrez_id": "25836",
+            "distance": 0.445,
+            "gestalt_score": 0.445,
+            "image_id": "4883",
             "subject_id": "3546"
         },
         {
-            "distance": 0.516,
-            "image_id": "8513",
-            "gene_entrez_id": "8243",
             "gene_name": "SMC1A",
+            "gene_entrez_id": "8243",
+            "distance": 0.535,
+            "gestalt_score": 0.535,
+            "image_id": "8513",
             "subject_id": "5656"
         },
         {
-            "distance": 0.516,
+            "gene_name": "SMC3",
+            "gene_entrez_id": "9126",
+            "distance": 0.535,
+            "gestalt_score": 0.535,
             "image_id": "8513",
-            "gene_entrez_id": "55869",
-            "gene_name": "HDAC8",
             "subject_id": "5656"
         },...
     ]
@@ -105,23 +108,26 @@ A syndrome list sorted by the distance in ascending order.
         {
             "syndrome_name": "Cornelia de Lange syndrome",
             "omim_id": 122470,
-            "distance": 0.44,
+            "distance": 0.445,
+            "gestalt_score": 0.445,
             "image_id": "4883",
             "subject_id": "3546"
         },
         {
             "syndrome_name": "DDX23",
             "omim_id": "",
-            "distance": 0.575,
+            "distance": 0.584,
+            "gestalt_score": 0.584,
             "image_id": "8998",
             "subject_id": "5949"
         },
         {
-            "syndrome_name": "INTELLECTUAL DEVELOPMENTAL DISORDER, X-LINKED, SYNDROMIC, NASCIMENTO TYPE; MRXSN",
-            "omim_id": 300860,
-            "distance": 0.641,
-            "image_id": "5014",
-            "subject_id": "3650"
+            "syndrome_name": "KBG SYNDROME; KBGS",
+            "omim_id": 148050,
+            "distance": 0.678,
+            "gestalt_score": 0.678,
+            "image_id": "11630",
+            "subject_id": "7291"
         },...
     ]
 ```
