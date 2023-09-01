@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     _models = get_models()
     _cropper_model, _device = load_cropper_model()
     # Load synd dict
-    with open(os.path.join("data", "image_gene_and_syndrome_metadata_10082023.p"), "rb") as f:
+    with open(os.path.join("data", "image_gene_and_syndrome_metadata_v1.0.3.p"), "rb") as f:
         data = pickle.load(f)
     _images_synds_dict = data["disorder_level_metadata"]
     _images_genes_dict = data["gene_level_metadata"]
@@ -59,7 +59,7 @@ async def predict_endpoint(image: Img):
         return {"message": "Face alignment error."}
     align_time = time.time()
     try:
-        encoding = encode(_models, 'cpu', aligned_img, False, False)
+        encoding = encode(_models, 'cpu', aligned_img)
     except Exception as e:
         return {"message": "Encoding error."}
     encode_time = time.time()
