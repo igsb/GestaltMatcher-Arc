@@ -62,6 +62,7 @@ A gene list sorted by the distance in ascending order which can be used for vari
 * **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
 * **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
 * **gene_entrez_id and gene_name** the gene id and gene name.
+* **gestalt score** is the same as the distance.
 
 **Note:** some syndromes have no gene associated because they are the chromosomal abnormality or huge deletion that cover
 multiple genes. We still keep them in the entry. For example, WILLIAMS-BEUREN SYNDROME; WBS has no gene associated in OMIM, so we use gene_name: WILLIAMS-BEUREN SYNDROME; WBS and gene_entrez_id: null for this entry.
@@ -103,6 +104,7 @@ A syndrome list sorted by the distance in ascending order.
 * **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
 * **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
 * **syndrome_name and omim_id** the syndrome name and omim id.
+* **gestalt score** is the same as the distance.
 ```angular2html
     "suggested_syndromes_list": [
         {
