@@ -68,32 +68,38 @@ multiple genes. We still keep them in the entry. For example, WILLIAMS-BEUREN SY
 Please filter out this kind of entry with null gene_entrez_id if you do need them.  
 
 ```angular2html
+{    
+    "case_id": "cdls_demo",
+    "model_version": "v1.0.3",
+    "gallery_version": "v1.0.3",
     "suggested_genes_list": [
         {
             "gene_name": "NIPBL",
             "gene_entrez_id": "25836",
-            "distance": 0.445,
-            "gestalt_score": 0.445,
+            "distance": 0.44,
+            "gestalt_score": 0.44,
             "image_id": "4883",
             "subject_id": "3546"
         },
         {
             "gene_name": "SMC1A",
             "gene_entrez_id": "8243",
-            "distance": 0.535,
-            "gestalt_score": 0.535,
+            "distance": 0.516,
+            "gestalt_score": 0.516,
             "image_id": "8513",
             "subject_id": "5656"
         },
         {
-            "gene_name": "SMC3",
-            "gene_entrez_id": "9126",
-            "distance": 0.535,
-            "gestalt_score": 0.535,
+            "gene_name": "HDAC8",
+            "gene_entrez_id": "55869",
+            "distance": 0.516,
+            "gestalt_score": 0.516,
             "image_id": "8513",
             "subject_id": "5656"
         },...
-    ]
+    ],
+    "suggested_genes_list": [...]
+}
 ```
 
 
@@ -108,26 +114,26 @@ A syndrome list sorted by the distance in ascending order.
         {
             "syndrome_name": "Cornelia de Lange syndrome",
             "omim_id": 122470,
-            "distance": 0.445,
-            "gestalt_score": 0.445,
+            "distance": 0.44,
+            "gestalt_score": 0.44,
             "image_id": "4883",
             "subject_id": "3546"
         },
         {
             "syndrome_name": "DDX23",
             "omim_id": "",
-            "distance": 0.584,
-            "gestalt_score": 0.584,
+            "distance": 0.575,
+            "gestalt_score": 0.575,
             "image_id": "8998",
             "subject_id": "5949"
         },
         {
-            "syndrome_name": "KBG SYNDROME; KBGS",
-            "omim_id": 148050,
-            "distance": 0.678,
-            "gestalt_score": 0.678,
-            "image_id": "11630",
-            "subject_id": "7291"
+            "syndrome_name": "SMITH-MAGENIS SYNDROME; SMS",
+            "omim_id": 182290,
+            "distance": 0.699,
+            "gestalt_score": 0.699,
+            "image_id": "5961",
+            "subject_id": "4239"
         },...
     ]
 ```
