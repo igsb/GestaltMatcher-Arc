@@ -33,6 +33,11 @@ Save the following file in ./data/
 Save the following file in ./data/gallery_encodings/
 1. GMDB_gallery_encodings_v1.0.3.pkl (image encodings)
 
+**Config file**
+
+config.json stores the username and password required for the authentication. Please change the default setting before
+starting the REST API. Please also change the username and password in send_image_api.py. 
+
 ### Build and run docker image
 Build docker image: `docker build -t gm-api .`
 
