@@ -9,9 +9,9 @@ from pathlib import Path
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Analyze image via REST api')
-    parser.add_argument('--case_input', default='data', dest='case_input',
+    parser.add_argument('--case_input', default='demo_images\cdls_demo.png', dest='case_input',
                         help='Path to the directory containing the case encodings or the single file containing the gallery encodings.')
-    parser.add_argument('--output_dir', default='', dest='output_dir',
+    parser.add_argument('--output_dir', default='demo_output', dest='output_dir',
                         help='Path to the directory for saving the results.')
     parser.add_argument('--url', default='localhost', dest='url',
                         help='URL to the api.')
@@ -31,18 +31,21 @@ def analyze_image(input_file, output_dir, api_endpoint):
     # defining a params dict for the parameters to be sent to the API
     PARAMS = {"img": encode_image_str}
 
-
-    r = requests.post(url=api_endpoint, json=PARAMS)
-
+    auth = requests.auth.HTTPBasicAuth('your_username', 'your_password')
+    r = requests.post(url=api_endpoint, json=PARAMS, auth=auth)
     # extracting data in json format
+    status = r.status_code
     data = r.json()
-    output_data = {}
-    output_data['case_id'] = file_predix
-    for key, value in data.items():
-        output_data[key] = value
-    output_filename = os.path.join(output_dir, "{}.json".format(file_predix))
-    with open(output_filename, 'w', encoding='utf-8') as f:
-        json.dump(output_data, f, ensure_ascii=False, indent=4)
+    if status != 200:
+        print(data)
+    else:
+        output_data = {}
+        output_data['case_id'] = file_predix
+        for key, value in data.items():
+            output_data[key] = value
+        output_filename = os.path.join(output_dir, "{}.json".format(file_predix))
+        with open(output_filename, 'w', encoding='utf-8') as f:
+            json.dump(output_data, f, ensure_ascii=False, indent=4)
 
 
 def main():

@@ -1,13 +1,49 @@
 import base64
 import pickle
+import secrets
+from typing import Annotated
 from lib.encode import *
 from lib.evaluation import *
-from fastapi import FastAPI
 from pydantic import BaseModel
 from lib.face_alignment import *
 from contextlib import asynccontextmanager
 from lib.utils_functions import readb64, encodeb64
 from datetime import datetime
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+security = HTTPBasic()
+
+with open('config.json', 'r') as config_file:
+    print(1233445)
+    config = json.load(config_file)
+
+USERNAME = config.get('username')
+PASSWORD = config.get('password')
+
+def get_current_username(
+        credentials: Annotated[HTTPBasicCredentials, Depends(security)]
+    ):
+    current_username_bytes = credentials.username.encode("utf8")
+    correct_username_bytes = USERNAME.encode("utf8")
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
+    current_password_bytes = credentials.password.encode("utf8")
+    correct_password_bytes = PASSWORD.encode("utf8")
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    return credentials.username
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,7 +76,7 @@ class Img(BaseModel):
     img: str
 
 @app.post("/predict")
-async def predict_endpoint(image: Img):
+async def predict_endpoint(username: Annotated[str, Depends(get_current_username)], image: Img):
     img = readb64(image.img)
 
     start_time = time.time()
