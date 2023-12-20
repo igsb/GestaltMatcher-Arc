@@ -223,7 +223,7 @@ def save_to_json(results, output_dir, output_file):
 
 def get_gallery_encodings_set(images_synds_dict):
     gallery_list = []
-    gallery_input = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_10082023.pkl')
+    gallery_input = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_10102023_v1.0.7.pkl')
     gallery_df = get_encodings_set(gallery_input, gallery_list)
     image_ids = [str(i) for i in images_synds_dict.keys()]
     gallery_df = gallery_df[gallery_df["img_name"].isin(image_ids)]
@@ -277,8 +277,8 @@ def predict(test_df, _gallery_df, images_synds_dict, images_genes_dict, genes_me
     #print('Get genes: {:.2f}s'.format(get_genes_time-get_synds_time))
     #print('Format: {:.2f}s'.format(output_finished_time-get_genes_time))
     #print('Total: {:.2f}s'.format(output_finished_time-start_time))
-    output = {"model_version": "v1.0.3",
-              "gallery_version": "10.08.2023",
+    output = {"model_version": "v1.0.7",
+              "gallery_version": "10.10.2023",
               "suggested_genes_list": gene_output_list,
               "suggested_syndromes_list": synd_output_list}
     return output

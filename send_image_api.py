@@ -52,7 +52,8 @@ def main():
     args = parse_args()
 
     # api-endpoint
-    predict_URL = "http://{}:5000/predict".format(args.url)
+    predict_URL = "http://{}:{}/predict".format(args.url, args.port)
+
     start_time = time.time()
 
     if not os.path.exists(args.output_dir):

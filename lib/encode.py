@@ -88,9 +88,9 @@ def get_models():
         return _model
 
     # finetuned r100
-    model1 = get_model("saved_models/s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth", device=device).eval()
+    model1 = get_model("saved_models/s107_glint360k_r50_512d_gmdb__v1.0.7_bs64_size112_channels3_last_model.pth", device=device).eval()
     # original r100
-    model2 = get_model("saved_models/s2_glint360k_r100_512d_gmdb__v1.0.3_bs128_size112_channels3_last_model.pth", device=device).eval()
+    model2 = get_model("saved_models/s107_glint360k_r100_512d_gmdb__v1.0.7_bs128_size112_channels3_last_model.pth", device=device).eval()
     # mix
     model3 = get_model("saved_models/glint360k_r100.onnx", device=device).eval()
 
