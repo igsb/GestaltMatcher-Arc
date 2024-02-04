@@ -124,6 +124,7 @@ python predict_ensemble.py
 ### Evaluation
 Using the previously computed encodings as input for evaluation will allow you to obtain the results listed in the table.
 
+#### v1.0.3
 ```
 python evaluate_ensemble.py
 
@@ -143,7 +144,26 @@ python evaluate_ensemble.py
 ===========================================================
 
 ```
+#### v1.0.9
+```
+python evaluate_ensemble.py
 
+===========================================================
+---------   test: Frequent, gallery: Frequent    ----------
+|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
+|GMDB-frequent|7755    |792   |43.71 |65.16 |73.76 |85.29 |
+---------       test: Rare, gallery: Rare        ----------
+|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
+|GMDB-rare    |856.9   |360.1 |31.84 |48.71 |57.06 |70.55 |
+--------- test: Frequent, gallery: Frequent+Rare ----------
+|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
+|GMDB-frequent|8611.9  |792   |43.02 |63.70 |72.44 |82.92 |
+---------   test: Rare, gallery: Frequent+Rare   ----------
+|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
+|GMDB-rare    |8611.9  |360.1 |19.77 |32.56 |38.57 |49.89 |
+===========================================================
+
+```
 
 ## Contact
 Tzung-Chien Hsieh
