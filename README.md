@@ -1,14 +1,17 @@
 This branch in under construction - will be updated soon.
 
 # GestaltMatcher-Arc
-This repository contains all the code used to train and evaluate our GestaltMatcher-Arc models in our WACV2023 
-accepted paper: Improving Deep Facial Phenotyping for Ultra-rare Disorder Verification Using Model Ensembles 
-(https://arxiv.org/abs/2211.06764 ).\
+This repository contains all the code used to train and evaluate our GestaltMatcher-Arc models in our Nature Genetics 
+submission paper: _GestaltMatcher Database - A global reference for facial phenotypic variability in rare human diseases_
+(link follows soon).\
 This repo also contains snippets of code from insightface (https://github.com/deepinsight/insightface).
 
-In order to reproduce the results access must be requested to the GestaltMatcher DataBase (GMDB).
+In order to reproduce the results access must be requested to the GestaltMatcher DataBase (GMDB) v1.1.0.
 That can be done following this link (https://db.gestaltmatcher.org/documents) if you're affiliated with a 
 medical facility or faculty.
+
+If you're only interested in reproducing the results achieved in the paper, and already have the image encodings, 
+simply run the code snippets provided in the **Evaluation**-section at the bottom of this document.
 
 ## Environment
 Please use python version 3.7+, and the package listed in requirements.txt.
@@ -47,31 +50,32 @@ The data should be stored in `../data/GestaltMatcherDB/<version>`, it can be dow
 on request. \
 Please download the following two files from GMDB website:
 * GMDB metadata
-* GMDB_original_images_v1.0.3.tar.gz
+* GMDB_original_images_v1.1.0.tar.gz
 
 ```
 cd ../data/GestaltMatcherDB
-tar -xzvf GMDB_original_images_v1.0.3.tar.gz
-mv GMDB_original_images_v1.0.3 gmdb_images
+tar -xzvf GMDB_original_images_v1.1.0.tar.gz
+mv GMDB_original_images_v1.1.0 gmdb_images
 tar -xzvf GMDB_metadata.tar.gz
 mv gmdb_metadata/* .
 ```
 
 Make sure your final data structure looks as follows: \
 `..\data\GestaltMatcherDB\<version>`\
+`...\gmdb_crops`\
 `...\gmdb_images`\
 `...\gmdb_metadata`,\
 where `<version>` is your version of GMDB. 
 
 ### Crop and align faces
-In order to get the aligned images, you have to run the `detect_pipe.py` and `align_pipe.py` from 
+In order to get the aligned images from `gmdb_images` yourself, you have to run the `detect_pipe.py` and `align_pipe.py` from 
 https://github.com/AlexanderHustinx/GestaltEngine-FaceCropper. \
+This can be useful in case you'd like e.g., a different resolution, or alignment.\
 More details are in the README of that repo. \
-Most importantly the face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from 
+
+Most importantly, the face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from 
 [Google Docs](https://drive.google.com/open?id=1oZRSG0ZegbVkVwUd8wUIQx8W7yfZ_ki1) with pw: fstq
 
-The face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from the repository 
-mentioned above.\
 If you don't have GPU, please use `--cpu` to run on cpu mode.
 
 FaceCropper command to get relevant coordinates of faces from data directory:
@@ -87,8 +91,8 @@ Note: the alignment will require the `scikit-image` package.\
 Make sure to replace the `<version>` in the paths with your GMDB version; highest version at the time of writing is v1.0.3
 
 ## Train models
-The training of GestaltMatcher-Arc needs to be run twice: a) for the resnet-50 mix model, and b) for the resnet-100 model.
-For these also require the pretrained ArcFace models from insightface: `glint360k_r50.onnx` and `glint360k_r100.onnx` to 
+The training of GestaltMatcher-Arc ensemble needs to be run twice: a) for the resnet-50 mix model, and b) for the resnet-100 model.
+These also require the pretrained ArcFace models from insightface: `glint360k_r50.onnx` and `glint360k_r100.onnx` to 
 be in the directory `./saved_models`. \
 These models can be downloaded here: https://github.com/deepinsight/insightface/tree/master/model_zoo 
 
@@ -120,51 +124,52 @@ The following command will generate `all_encodings.csv` using the three models i
 test time augmentation described in the paper:
 
 ```
-python predict_ensemble.py
+python predict_ancestry.py
 ```
 
-### Evaluation
-Using the previously computed encodings as input for evaluation will allow you to obtain the results listed in the table.
+## Evaluation
+Using the previously computed encodings, or existing provided ones (just put them into the repository's directory), as 
+input for evaluation will allow you to obtain the results listed in the paper manuscript.
 
-#### v1.0.3
+Use the following code snippets to reproduce the results:
+
+**Performance for each confounder/group**\
+`python evaluate_ancestry`
+
+**Performance per ancestral group for the gallery set expansion experiment**\
+`python evaluate_ancestry --gallery_expansion --N_repeat 10`
+
+**Performance for overlapping syndromes between ancestral groups**\
+`python evaluate_ancestry --overlap --overlap_ancestry_B African`\
+`python evaluate_ancestry --overlap --overlap_ancestry_B Asian`\
+`python evaluate_ancestry --overlap --overlap_ancestry_B Others`\
+`python evaluate_ancestry --overlap --overlap_ancestry_B Unknown`
+
+### Performance for each confounder
+Running the first snippet will result in the following output
 ```
-python evaluate_ensemble.py
+Trained on v1.1.0, testing on v1.1.0
+Loop #1:
+Experiment: All EU + 100% Other ethnicities; Sampled 3159 patient_ids, leading to 3883 images.
 
-===========================================================
----------   test: Frequent, gallery: Frequent    ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-frequent|5761    |593   |52.99 |71.01 |79.19 |89.99 |
----------       test: Rare, gallery: Rare        ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-rare    |792.7   |312.3 |35.98 |53.93 |62.43 |76.56 |
---------- test: Frequent, gallery: Frequent+Rare ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-frequent|6553.7  |593   |50.79 |69.17 |76.66 |88.37 |
----------   test: Rare, gallery: Frequent+Rare   ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-rare    |6553.7  |312.3 |24.05 |38.44 |44.53 |57.95 |
-===========================================================
-
-```
-#### v1.0.9
-```
-python evaluate_ensemble.py
-
-===========================================================
----------   test: Frequent, gallery: Frequent    ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-frequent|7755    |792   |43.71 |65.16 |73.76 |85.29 |
----------       test: Rare, gallery: Rare        ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-rare    |856.9   |360.1 |31.84 |48.71 |57.06 |70.55 |
---------- test: Frequent, gallery: Frequent+Rare ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-frequent|8611.9  |792   |43.02 |63.70 |72.44 |82.92 |
----------   test: Rare, gallery: Frequent+Rare   ----------
-|Test set     |Gallery |Test  |Top-1 |Top-5 |Top-10|Top-30|
-|GMDB-rare    |8611.9  |360.1 |19.77 |32.56 |38.57 |49.89 |
-===========================================================
-
+Mean accuracy when using entire gallery set
+	Overall performance (n=882): [56.58, 76.08, 82.65, 90.36]
+	Sex performance: 
+		Male (n=419): [55.37, 74.22, 80.67, 88.78]
+		Female (n=393): [55.98, 75.83, 83.21, 91.09]
+		Unknown (n=70): [67.14, 88.57, 91.43, 95.71]
+	Ethnicity performance: 
+		African (n=29): [62.07, 82.76, 82.76, 86.21]
+		Asian (n=127): [53.54, 78.74, 85.04, 89.76]
+		European (n=523): [55.45, 75.14, 82.6, 90.25]
+		Others (n=69): [73.91, 81.16, 81.16, 92.75]
+		Unknown (n=134): [53.73, 73.13, 81.34, 91.04]
+	Age performance: 
+		Unknown/ x<=0 (n=412): [56.31, 76.46, 84.71, 92.23]
+		0 < x < 1y (n=53): [52.83, 71.7, 79.25, 90.57]
+		1 < x <= 5y (n=137): [56.2, 75.91, 81.02, 90.51]
+		5 < x <= 10y (n=115): [57.39, 83.48, 86.09, 90.43]
+		10y < x (n=165): [58.18, 71.52, 77.58, 85.45]
 ```
 
 ## Contact
