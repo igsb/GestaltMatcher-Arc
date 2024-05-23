@@ -6,7 +6,7 @@ submission paper: _GestaltMatcher Database - A global reference for facial pheno
 (link follows soon).\
 This repo also contains snippets of code from insightface (https://github.com/deepinsight/insightface).
 
-In order to reproduce the results access must be requested to the GestaltMatcher DataBase (GMDB) v1.1.0.
+In order to reproduce the results, access must be requested to the GestaltMatcher DataBase (GMDB) v1.1.0.
 That can be done following this link (https://db.gestaltmatcher.org/documents) if you're affiliated with a 
 medical facility or faculty.
 
@@ -67,7 +67,7 @@ Make sure your final data structure looks as follows: \
 `...\gmdb_metadata`,\
 where `<version>` is your version of GMDB. 
 
-### Crop and align faces (outdated)
+### Crop and align faces
 In order to get the aligned images from `gmdb_images` yourself, you have to run the `detect_pipe.py` and `align_pipe.py` from 
 https://github.com/AlexanderHustinx/GestaltEngine-FaceCropper. \
 This can be useful in case you'd like e.g., a different resolution, or alignment.\
@@ -85,10 +85,16 @@ python detect_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_image
 
 FaceCropper command to align all faces based on the coordinates according to the ArcFace alignment used by insightface:
 ```
-python align_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_align/ --coords_file ../data/GestaltMatcherDB/<version>/gmdb_rot/face_coords.csv
+python align_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_crops/ --coords_file ../data/GestaltMatcherDB/<version>/gmdb_rot/face_coords.csv
 ```
 Note: the alignment will require the `scikit-image` package.\
 Make sure to replace the `<version>` in the paths with your GMDB version; highest version at the time of writing is v1.1.0
+
+E.g., for GMDB v1.1.0 you should run these commands:
+```
+python detect_pipe.py --images_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_images/ --save_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_rot/ --result_type coords --fill_color 0
+python align_pipe.py --images_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_crops/ --coords_file ../data/GestaltMatcherDB/v1.1.0/gmdb_rot/face_coords.csv
+```
 
 ## Train models
 The training of GestaltMatcher-Arc ensemble needs to be run twice: a) for the resnet-50 mix model, and b) for the resnet-100 model.
