@@ -24,9 +24,9 @@ def parse_args():
     parser.add_argument('--session', type=int, dest='session',
                         help='session used to distinguish model tests.')
     parser.add_argument('--batch_size', type=int, default=128, metavar='BN',
-                        help='input batch size for training (default: 280)')
+                        help='input batch size for training (default: 128)')
     parser.add_argument('--epochs', type=int, default=50, metavar='E',
-                        help='number of epochs to train (default: 500)')
+                        help='number of epochs to train (default: 50)')
     parser.add_argument('--lr', type=float, default=5e-3, metavar='LR',  # lr=1e-3
                         help='learning rate (default: 0.005)')
     parser.add_argument('--seed', type=int, default=11, metavar='S',
@@ -44,24 +44,24 @@ def parse_args():
     parser.add_argument('--model_type', default='glint360k_r50', dest='model_type',
                         help='model backend to use')
     parser.add_argument('--in_channels', default=3, dest='in_channels', type=int,
-                        help='number of color channels of the images used as input (default: 1)')
+                        help='number of color channels of the images used as input (default: 3)')
     parser.add_argument('--img_size', default=112, dest='img_size', type=int,
-                        help='input image size of the model (default: 100)')
+                        help='input image size of the model (default: 112)')
     parser.add_argument('--unfreeze', action='store_false', default=True, dest='freeze',
                         help='flag to set if you want to unfreeze the base model weights.')
 
     # Dataset parameters
     parser.add_argument('--dataset', default='gmdb', dest='dataset',
-                        help='which dataset to use. (Options: "casia", "gmdb")')
+                        help='which dataset to use. (Options: "gmdb")')
     parser.add_argument('--dataset_type', default='', dest='dataset_type',
                         help='type of the dataset to use, e.g. normal (="") or augmented(="aug") (default="")')
-    parser.add_argument('--dataset_version', default='v1.0.3', dest='dataset_version', type=str,
-                        help='version of the dataset to use (default="v1.0.3")')
+    parser.add_argument('--dataset_version', default='v1.1.0', dest='dataset_version', type=str,
+                        help='version of the dataset to use (default="v1.1.0")')
     parser.add_argument('--lookup_table', default='', dest='lookup_table_path',
                         help='lookup table path, use if you want to load path instead of generation a lookup table (default = "")')
 
     # File locations
-    parser.add_argument('--data_dir', default='C:/Users/Alexander/Documents/data', dest='data_dir',
+    parser.add_argument('--data_dir', default='../data', dest='data_dir',
                         help='Location of the data directory (not dataset). (default = home pc)')
     parser.add_argument('--weight_dir', default='saved_models', dest='weight_dir',
                         help='Location of the model weights directory. (default = "saved_models")')
@@ -72,7 +72,7 @@ def parse_args():
 
     #
     parser.add_argument('--paper_model', default='None', dest='paper_model', type=str,
-                        help='Use when reproducing paper models a) r50-mix, or b) r100')
+                        help='Use when reproducing paper models "a": r50-mix, or "b": r100')
 
     return parser.parse_args()
 
@@ -282,7 +282,7 @@ def main():
     # Dataset and dataloaders
     kwargs = {}
     if use_cuda:
-        kwargs.update({'num_workers': (0 if args.local else 16), 'pin_memory': True})
+        kwargs.update({'num_workers': (0 if args.local else 12), 'pin_memory': True})
 
     dataset_train = dataset_val = None
     lookup_table = None
@@ -291,7 +291,7 @@ def main():
     # Create and get the training and validation datasets
     dataset_train, dataset_val = get_train_and_val_datasets(args.dataset, args.dataset_type, args.dataset_version,
                                                             args.img_size, args.in_channels, args.data_dir,
-                                                            img_postfix='_rot_aligned')
+                                                            img_postfix='_aligned')
 
     # Get the number of classes from the dataset
     args.num_classes = dataset_train.get_num_classes()
@@ -322,7 +322,7 @@ def main():
     # Create dataloaders
     train_loader = torch.utils.data.DataLoader(dataset_train, **kwargs, shuffle=True, batch_size=args.batch_size,
                                                worker_init_fn=seed_worker, drop_last=True)
-    val_loader = torch.utils.data.DataLoader(dataset_val, pin_memory=True, num_workers=12, shuffle=False,
+    val_loader = torch.utils.data.DataLoader(dataset_val, pin_memory=True, num_workers=0, shuffle=False,
                                              drop_last=False,
                                              worker_init_fn=seed_worker,
                                              batch_size=args.val_bs)

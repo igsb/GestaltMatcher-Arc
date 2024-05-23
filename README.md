@@ -67,7 +67,7 @@ Make sure your final data structure looks as follows: \
 `...\gmdb_metadata`,\
 where `<version>` is your version of GMDB. 
 
-### Crop and align faces
+### Crop and align faces (outdated)
 In order to get the aligned images from `gmdb_images` yourself, you have to run the `detect_pipe.py` and `align_pipe.py` from 
 https://github.com/AlexanderHustinx/GestaltEngine-FaceCropper. \
 This can be useful in case you'd like e.g., a different resolution, or alignment.\
@@ -88,7 +88,7 @@ FaceCropper command to align all faces based on the coordinates according to the
 python align_pipe.py --images_dir ../data/GestaltMatcherDB/<version>/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/<version>/gmdb_align/ --coords_file ../data/GestaltMatcherDB/<version>/gmdb_rot/face_coords.csv
 ```
 Note: the alignment will require the `scikit-image` package.\
-Make sure to replace the `<version>` in the paths with your GMDB version; highest version at the time of writing is v1.0.3
+Make sure to replace the `<version>` in the paths with your GMDB version; highest version at the time of writing is v1.1.0
 
 ## Train models
 The training of GestaltMatcher-Arc ensemble needs to be run twice: a) for the resnet-50 mix model, and b) for the resnet-100 model.
@@ -96,10 +96,10 @@ These also require the pretrained ArcFace models from insightface: `glint360k_r5
 be in the directory `./saved_models`. \
 These models can be downloaded here: https://github.com/deepinsight/insightface/tree/master/model_zoo 
 
-To reproduce our Gestalt Matcher model listed in the table by training from scratch, use:
+To reproduce the GestaltMatcher-Arc model ensemble by training from scratch, use:
 ```
-python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data 
-python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data 
+python train_gm_arc.py --paper_model a --epochs 50 --session 3 --local --data_dir ../data 
+python train_gm_arc.py --paper_model b --epochs 50 --session 4 --local --data_dir ../data 
 ```
 
 You may choose whatever seed and session you find useful.
@@ -114,32 +114,37 @@ Due to ethical reasons the pretrained models are not made available publicly. \
 Once access has been granted to GMDB, the pretrained model weights can be requested as well.
 
 ## Encode photos and evaluate models
-With `python predict_ensemble.py` you will encode all images in `--data_dir`, which by default is set to 
-`../data/GestaltMatcherDB/v1.0.3/gmdb_align`.\
-The face encodings will be saved to `all_encodings.csv`.
+With `predict_ensemble.py` you will encode all images in `--data_dir`, which by default is set to 
+`../data/GestaltMatcherDB/v1.1.0/gmdb_crops`.\
+The face encodings will be saved to `all_encodings_train_v1.1.0_test_1.1.0.csv` by default.
 
-For the machine without GPU, please use `--no_cuda`.
+Please make sure you have the required trained models in the `./saved_models`-directory.
+You need `s3_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth`, 
+`s4_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth`, and \
+`glint360k_r100.onnx`
 
-The following command will generate `all_encodings.csv` using the three models in our model ensemble, as well as the 
-test time augmentation described in the paper:
-
+Once you've checked all the constraints, run:
 ```
-python predict_ancestry.py
+python predict_ensemble.py
 ```
+For the machine without GPU, please use `--no_cuda`. \
+(Note: It will take longer)
 
 ## Evaluation
-Using the previously computed encodings, or existing provided ones (just put them into the repository's directory), as 
-input for evaluation will allow you to obtain the results listed in the paper manuscript.
+Using the encodings you just computed, or existing provided ones (just put them into the repository's directory), as 
+input for evaluation will allow you to obtain the results listed in the paper manuscript. \
+As such the file `all_encodings_train_v1.1.0_test_1.1.0.csv` should be in the base directory of this repo \
+(e.g. `../GestaltMatcher-Arc/all_encodings_train_v1.1.0_test_1.1.0.csv`) \
+Additionally, the lookup table obtained during training (or provided), `lookup_table_gmdb_v1.1.0.txt`, should be in the same base-directory. 
 
-Use the following code snippets to reproduce the results:
-
-**Performance for each confounder/group**\
+Use the following code snippets to reproduce the results: \
+**Performance for each confounder/group** (Table 1)\
 `python evaluate_ancestry`
 
-**Performance per ancestral group for the gallery set expansion experiment**\
+**Performance per ancestral group for the gallery set expansion experiment** (Figure 5b)\
 `python evaluate_ancestry --gallery_expansion --N_repeat 10`
 
-**Performance for overlapping syndromes between ancestral groups**\
+**Performance for overlapping syndromes between ancestral groups** (Table 2)\
 `python evaluate_ancestry --overlap --overlap_ancestry_B African`\
 `python evaluate_ancestry --overlap --overlap_ancestry_B Asian`\
 `python evaluate_ancestry --overlap --overlap_ancestry_B Others`\

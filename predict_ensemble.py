@@ -44,7 +44,7 @@ def parse_args():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=11, metavar='S',
                         help='random seed (default: 11)')
-    parser.add_argument('--data_dir', default='../data/GestaltMatcherDB/v1.0.3/gmdb_align', dest='data_dir',
+    parser.add_argument('--data_dir', default='../data/GestaltMatcherDB/v1.1.0/gmdb_crops', dest='data_dir',
                         help='Path to the data directory containing the images to run the model on.')
     parser.add_argument('--weight_dir', default='./saved_models', dest='weight_dir',
                         help='Path to the data directory containing the model weights.')
@@ -56,7 +56,7 @@ def predict(models, device, data, args):
     for model in models:
         model.eval()
 
-    f = open("all_encodings.csv", "w+")
+    f = open("all_encodings_train_v1.1.0_test_v1.1.0.csv", "w+")
     f.write(f"img_name;model;flip;gray;class_conf;representations\n")
 
     tick = datetime.datetime.now()
@@ -80,7 +80,6 @@ def predict(models, device, data, args):
                             pred, pred_rep = pred_rep
                             pred = pred.squeeze().tolist()
 
-                        pred_rep = F.normalize(pred_rep)
                         f.write(f"{img_path};m{idx};{int(flip)};{int(gray)};"
                                 f"{pred};{pred_rep.squeeze().tolist()}\n")
 
@@ -120,11 +119,11 @@ def main():
 
     # mix
     model1 = get_model(os.path.join(args.weight_dir,
-                                    "s1_glint360k_r50_512d_gmdb__v1.0.3_bs64_size112_channels3_last_model.pth"),
+                                    "s3_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth"),
                        device=device)
     # finetuned r100
     model2 = get_model(os.path.join(args.weight_dir,
-                                    "s2_glint360k_r100_512d_gmdb__v1.0.3_bs128_size112_channels3_last_model.pth"),
+                                    "s4_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth"),
                        device=device)
     # original r100
     model3 = get_model(os.path.join(args.weight_dir, "glint360k_r100.onnx"), device=device)
