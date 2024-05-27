@@ -145,16 +145,31 @@ Additionally, the lookup table obtained during training (or provided), `lookup_t
 
 Use the following code snippets to reproduce the results: \
 **Performance for each confounder/group** (Table 1)\
-`python evaluate_ancestry`
+`python evaluate_ancestry_clustering`
 
 **Performance per ancestral group for the gallery set expansion experiment** (Figure 5b)\
-`python evaluate_ancestry --gallery_expansion --N_repeat 10`
+`python evaluate_ancestry_clustering --gallery_expansion --N_repeat 10`
 
 **Performance for overlapping syndromes between ancestral groups** (Table 2)\
-`python evaluate_ancestry --overlap --overlap_ancestry_B African`\
-`python evaluate_ancestry --overlap --overlap_ancestry_B Asian`\
-`python evaluate_ancestry --overlap --overlap_ancestry_B Others`\
-`python evaluate_ancestry --overlap --overlap_ancestry_B Unknown`
+`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B African`\
+`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B Asian`\
+`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B Others`\
+`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B Unknown`
+
+**Performance training set experiments** (Figure 5a) \
+Further, the training set experiment's performances can be computed with `evaluate_ancestry_classification.py`. \
+This script averages the per-ancestry performance over 5 different training sets, 
+using permutations of EU+EU* and EU+Others. \
+To that end, you need to download the performances (`performance_s<session>_seed<seed>_['eu' or 'all_anc'].npy`) and 
+results (`results_s<session>_seed<seed>_['eu' or 'all_anc'].npy`) from the supplied materials. And save those to the 
+directory `./experiments_anc`. 
+
+The results can be obtained per set (EU+EU* and EU+Others) with the following two snippets: 
+```
+python evaluate_ancestry_classification --set eu
+python evaluate_ancestry_classification --set others
+```
+These results are also used in the JupyterNotebook in the `./plot_scripts`.
 
 ### Performance for each confounder
 Running the first snippet will result in the following output
@@ -182,6 +197,10 @@ Mean accuracy when using entire gallery set
 		5 < x <= 10y (n=115): [57.39, 83.48, 86.09, 90.43]
 		10y < x (n=165): [58.18, 71.52, 77.58, 85.45]
 ```
+
+## Reproducing the plots
+Lastly, we added a Jupyter Notebook-file to the directory `plot_scripts` in which we use the aforementioned results to 
+generate Figure 5a and b.
 
 ## Contact
 Tzung-Chien Hsieh

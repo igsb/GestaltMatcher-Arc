@@ -353,7 +353,7 @@ def main():
         index_A = indexer.index(args.overlap_ancestry_A)
         index_B = indexer.index(args.overlap_ancestry_B)
 
-        print("Accuracy on overlapping syndromes when using full gallery")
+        print(f"Accuracy on overlapping syndromes (m={len(np.unique(test_synd_ids))}) when using full gallery")
         print(f"\tPerformance on [{args.overlap_ancestry_A}, {args.overlap_ancestry_B}]")
         print(f"\t\t{args.overlap_ancestry_A} (n={all_nums_eth[0][0][index_A]}): \n{np.stack(round_array(np.mean(np.array(all_corrs_eth)[:, :, index_A] / all_nums_eth[0][0][index_A], axis=0)))}")
         print(f"\t\t{args.overlap_ancestry_B} (n={all_nums_eth[0][0][index_B]}): \n{np.stack(round_array(np.mean(np.array(all_corrs_eth)[:, :, index_B] / all_nums_eth[0][0][index_B], axis=0)))}")
@@ -368,6 +368,7 @@ def main():
         print(f"\t\tOthers (n={all_nums_eth[0][0][3]}): \n{np.stack(round_array(np.mean(np.array(all_corrs_eth)[:, :, 3] / all_nums_eth[0][0][3], axis=0)))}")
         print(f"\t\tUnknown (n={all_nums_eth[0][0][4]}): \n{np.stack(round_array(np.mean(np.array(all_corrs_eth)[:, :, 4] / all_nums_eth[0][0][4], axis=0)))}")
 
+    print("")
 
 if __name__ == '__main__':
     main()
