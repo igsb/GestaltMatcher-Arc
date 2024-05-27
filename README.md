@@ -164,11 +164,10 @@ To that end, you need to download the performances (`performance_s<session>_seed
 results (`results_s<session>_seed<seed>_['eu' or 'all_anc'].npy`) from the supplied materials. And save those to the 
 directory `./experiments_anc`. 
 
-The results can be obtained per set (EU+EU* and EU+Others) with the following two snippets: 
-```
-python evaluate_ancestry_classification --set eu
-python evaluate_ancestry_classification --set others
-```
+The results can be obtained per set (EU+EU* and EU+Others) with the following two snippets: \
+`python evaluate_ancestry_classification --set eu`\
+`python evaluate_ancestry_classification --set others`
+
 These results are also used in the JupyterNotebook in the `./plot_scripts`.
 
 ### Performance for each confounder
