@@ -147,8 +147,8 @@ Use the following code snippets to reproduce the results: \
 **Performance for each confounder/group** (Table 1)\
 `python evaluate_ancestry_clustering`
 
-**Performance per ancestral group for the gallery set expansion experiment** (Figure 5b)\
-`python evaluate_ancestry_clustering --gallery_expansion --N_repeat 10`
+**Performance and standard deviation per ancestral group for the gallery set expansion experiment** (Figure 5b)\
+`python evaluate_ancestry_clustering --gallery_expansion --N_repeat 10 --stdev`
 
 **Performance for overlapping syndromes between ancestral groups** (Table 2)\
 `python evaluate_ancestry_clustering --overlap --overlap_ancestry_B African`\

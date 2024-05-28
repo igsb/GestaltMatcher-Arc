@@ -12,7 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='PyTorch Evaluate GestaltMatcher-Arc for GMDB v1.1.0')
 
     # Seed parameter
-    parser.add_argument('--seed', type=int, default=11,
+    parser.add_argument('--seed', type=int, default=42,
                         help='random seed (default: 42)')
 
     # Dataset version parameters
@@ -26,6 +26,8 @@ def parse_args():
                         help='Set this flag when interested in the gallery expansion experiment for ancestry')
     parser.add_argument('--repeat_N', type=int, default=10,
                         help='How often do we repeat the experiment?')
+    parser.add_argument('--stdev', action='store_true', default=False,
+                        help='Set this flag to return the standard deviations, e.g. if you want to reproduce Figure 5b')
 
     parser.add_argument('--overlap', action='store_true', default=False,
                         help='Set this flag when running the experiment for syndromes that occur in two ancestries; '
@@ -368,6 +370,13 @@ def main():
         print(f"\t\tOthers (n={all_nums_eth[0][0][3]}): \n{np.stack(round_array(np.mean(np.array(all_corrs_eth)[:, :, 3] / all_nums_eth[0][0][3], axis=0)))}")
         print(f"\t\tUnknown (n={all_nums_eth[0][0][4]}): \n{np.stack(round_array(np.mean(np.array(all_corrs_eth)[:, :, 4] / all_nums_eth[0][0][4], axis=0)))}")
 
+        if args.stdev:
+            print(f"\n\tStandard deviations: ")
+            print(f"\t\tAfrican: \n{np.stack(np.std(np.array(all_corrs_eth)[:, :, 0] / all_nums_eth[0][0][0], axis=0))}")
+            print(f"\t\tAsian: \n{np.stack(np.std(np.array(all_corrs_eth)[:, :, 1] / all_nums_eth[0][0][1], axis=0))}")
+            print(f"\t\tEuropean: \n{np.stack(np.std(np.array(all_corrs_eth)[:, :, 2] / all_nums_eth[0][0][2], axis=0))}")
+            print(f"\t\tOthers: \n{np.stack(np.std(np.array(all_corrs_eth)[:, :, 3] / all_nums_eth[0][0][3], axis=0))}")
+            print(f"\t\tUnknown: \n{np.stack(np.std(np.array(all_corrs_eth)[:, :, 4] / all_nums_eth[0][0][4], axis=0))}")
     print("")
 
 if __name__ == '__main__':
