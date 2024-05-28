@@ -12,7 +12,7 @@ medical facility or faculty.
 
 If you're only interested in reproducing the results achieved in the paper, and already have the image encodings, 
 simply run the code snippets provided in the **Evaluation**-section at the bottom of this document.
-
+- - -
 ## Environment
 Please use python version 3.7+, and the package listed in requirements.txt.
 
@@ -44,7 +44,7 @@ scikit-learn
 onnx2torch
 albumentations
 ```
-
+- - -
 ## Data preparation
 The data should be stored in `../data/GestaltMatcherDB/<version>`, it can be downloaded from http://gestaltmatcher.org 
 on request. \
@@ -95,7 +95,7 @@ E.g., for GMDB v1.1.0 you should run these commands:
 python detect_pipe.py --images_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_images/ --save_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_rot/ --result_type coords --fill_color 0
 python align_pipe.py --images_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_rot/ --save_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_crops/ --coords_file ../data/GestaltMatcherDB/v1.1.0/gmdb_rot/face_coords.csv
 ```
-
+- - -
 ## Train models
 The training of GestaltMatcher-Arc ensemble needs to be run twice: a) for the resnet-50 mix model, and b) for the resnet-100 model.
 These also require the pretrained ArcFace models from insightface: `glint360k_r50.onnx` and `glint360k_r100.onnx` to 
@@ -118,7 +118,7 @@ Training a model without GPU has not been tested.
 ### Pretrained models
 Due to ethical reasons the pretrained models are not made available publicly. \
 Once access has been granted to GMDB, the pretrained model weights can be requested as well.
-
+- - -
 ## Encode photos and evaluate models
 With `predict_ensemble.py` you will encode all images in `--data_dir`, which by default is set to 
 `../data/GestaltMatcherDB/v1.1.0/gmdb_crops`.\
@@ -135,8 +135,27 @@ python predict_ensemble.py
 ```
 For the machine without GPU, please use `--no_cuda`. \
 (Note: It will take longer)
-
+- - -
 ## Evaluation
+Our results can be reproduced once the models have been trained following the steps above, or using the files we 
+supplied to the reviewers.
+<details>
+<summary>These files should include... </summary>
+
+| Filename                                                                     | Description                                                                                                              |
+|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `all_encodings_train_v1.1.0_test_v1.1.0.csv`                                 | Resulting encodings of the model ensemble trained on GMDB v1.1.0                                                         |  
+| `experiments_anc.zip`                                                        | *.zip-file containing the results for each of the five EU + EU\* and EU + Others models for the training set experiments |
+| `glint360k_r50.onnx`                                                         | Pretrained face verification model A                                                                                     |
+| `glint360k_r100.onnx`                                                        | Pretrained face verification model B                                                                                     |
+| `lookup_table_gmdb_v1.1.0.txt`                                               | Lookup table with the syndrome ids - class labels                                                                        |
+| `Resnet50_Final.pth`                                                         | Model weights for the cropping and aligning step                                                                         |
+| `s3_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth`   | GestaltMatcher model weights for model A of the ensemble                                                                 |
+| `s4_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth` | GestaltMatcher model weights for model B of the ensemble                                                                 |
+</details>
+
+### Reproducing the results
+
 Using the encodings you just computed, or existing provided ones (just put them into the repository's directory), as 
 input for evaluation will allow you to obtain the results listed in the paper manuscript. \
 As such the file `all_encodings_train_v1.1.0_test_1.1.0.csv` should be in the base directory of this repo \
