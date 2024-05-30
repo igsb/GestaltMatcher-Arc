@@ -54,10 +54,11 @@ Please download the following two files from GMDB website:
 
 ```
 cd ../data/GestaltMatcherDB
+mkdir v1.1.0
 tar -xzvf GMDB_original_images_v1.1.0.tar.gz
-mv GMDB_original_images_v1.1.0 gmdb_images
+mv GMDB_original_images_v1.1.0 v1.0.0/gmdb_images
 tar -xzvf GMDB_metadata.tar.gz
-mv gmdb_metadata/* .
+mv gmdb_metadata v1.1.0/gmdb_metadata
 ```
 
 Make sure your final data structure looks as follows: \
@@ -75,6 +76,8 @@ More details are in the README of that repo. \
 
 Most importantly, the face cropper requires the model-weights "Resnet50_Final.pth". Remember to download them from 
 [Google Docs](https://drive.google.com/open?id=1oZRSG0ZegbVkVwUd8wUIQx8W7yfZ_ki1) with pw: fstq
+
+Store the model file "Resnet50_Final.pth" in weights folder.
 
 If you don't have GPU, please use `--cpu` to run on cpu mode.
 
@@ -164,16 +167,16 @@ Additionally, the lookup table obtained during training (or provided), `lookup_t
 
 Use the following code snippets to reproduce the results: \
 **Performance for each confounder/group** (Table 1)\
-`python evaluate_ancestry_clustering`
+`python evaluate_ancestry_clustering.py`
 
 **Performance and standard deviation per ancestral group for the gallery set expansion experiment** (Figure 5b)\
-`python evaluate_ancestry_clustering --gallery_expansion --N_repeat 10 --stdev`
+`python evaluate_ancestry_clustering.py --gallery_expansion --repeat_N 10 --stdev`
 
 **Performance for overlapping syndromes between ancestral groups** (Table 2)\
-`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B African`\
-`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B Asian`\
-`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B Others`\
-`python evaluate_ancestry_clustering --overlap --overlap_ancestry_B Unknown`
+`python evaluate_ancestry_clustering.py --overlap --overlap_ancestry_B African`\
+`python evaluate_ancestry_clustering.py --overlap --overlap_ancestry_B Asian`\
+`python evaluate_ancestry_clustering.py --overlap --overlap_ancestry_B Others`\
+`python evaluate_ancestry_clustering.py --overlap --overlap_ancestry_B Unknown`
 
 **Performance training set experiments** (Figure 5a) \
 Further, the training set experiment's performances can be computed with `evaluate_ancestry_classification.py`. \
@@ -184,8 +187,8 @@ results (`results_s<session>_seed<seed>_['eu' or 'all_anc'].npy`) from the suppl
 directory `./experiments_anc`. 
 
 The results can be obtained per set (EU+EU* and EU+Others) with the following two snippets: \
-`python evaluate_ancestry_classification --set eu`\
-`python evaluate_ancestry_classification --set others`
+`python evaluate_ancestry_classification.py --set eu`\
+`python evaluate_ancestry_classification.py --set others`
 
 These results are also used in the JupyterNotebook in the `./plot_scripts`.
 
