@@ -178,7 +178,7 @@ Use the following code snippets to reproduce the results: \
 `python evaluate_ancestry_clustering.py --overlap --overlap_ancestry_B Others`\
 `python evaluate_ancestry_clustering.py --overlap --overlap_ancestry_B Unknown`
 
-**Performance training set experiments** (Figure 5a) \
+**Performance training set experiments** (Figure 5a and Table 3) \
 Further, the training set experiment's performances can be computed with `evaluate_ancestry_classification.py`. \
 This script averages the per-ancestry performance over 5 different training sets, 
 using permutations of EU+EU* and EU+Others. \

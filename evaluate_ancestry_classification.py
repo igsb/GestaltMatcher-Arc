@@ -35,7 +35,7 @@ def main():
         if args.set == 'eu':
             file_path = os.path.join(results_dir, f'performance_s{i}_seed{i}_eu.npy')
         elif args.set == 'others':
-            file_path = os.path.join(results_dir, f'performance_s{i+10}_seed{i}_all_eth.npy')
+            file_path = os.path.join(results_dir, f'performance_s{i+10}_seed{i}_all_anc.npy')
 
         anc, distr, top1, top5 = np.load(file_path, allow_pickle=True)
 
