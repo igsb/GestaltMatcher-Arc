@@ -320,7 +320,8 @@ The structure of the file is shown below.
 | `class_conf`        | `[19.153106689453125, -1.1602606773376465, ...]` (truncated for brevity) |
 | `representations` | `[1.054652452468872, 0.4113105237483978, ...]` (truncated for brevity)   |
 
-### Evaluate on the whole dataset
+### Evaluation
+#### Evaluate on the whole dataset
 The following result is evaluating the whole v1.1.0 GMDB dataset.
 ```
 python .\evaluate_ensemble.py
@@ -341,7 +342,45 @@ python .\evaluate_ensemble.py
 ===========================================================
 ```
 
-### Evaluate encodings with gallery encodings
+#### Evaluate using Mulit-Image GestaltMatcher
+Our recent work has explored option for combining multiple images, either multiple (test) images belonging to the same 
+patient, or multiple gallery images of patients with the same disorder. We have released an evaluation script that 
+contains the most important configurations and combinations of our experiments such as to reproduce the results in our 
+preprint [*link here*].
+
+Following the earlier data preparation steps, you can simply use it out the box with the following commands:\
+`python .\evaluate_ensemble_multi_image.py`, for the entire test set and\
+`python .\evaluate_ensemble_multi_image.py --multi_only`, using a subset containing only patients with multiple images.
+
+A comparison of the most important results is shown below. 
+```
+                Multi-Image GestaltMatcher 
+======================================================
+-------   test: Frequent, gallery: Frequent    -------
+|Test set       |Gallery |Test  |Top-1 |Top-5 |Top-10|
+|GMDB-frequent  |8794    |882   |61.42 |80.03 |84.57 |
+|GMDB-frequent* |8794    |330   |71.56 |88.07 |92.66 |
+-------       test: Rare, gallery: Rare        -------
+|Test set       |Gallery |Test  |Top-1 |Top-5 |Top-10|
+|GMDB-rare      |922.6   |386.4 |35.75 |50.62 |58.04 |
+|GMDB-rare*     |922.6   |126.8 |39.52 |55.42 |62.69 |
+======================================================
+
+<test set>* indicates the multi-only subset, containing 
+only patients with more than 1 test image.
+```
+
+There are multiple parameters that can be set for such that users don't need to adjust the code too much:
+
+| Argument      | Description                                                                                                                              |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `split`       | Test and gallery splits to use. Options: `all`, `ff`, `rr`, `fa`, `ra`. (default=`all`)                                                  |
+| `version`     | GMDB version to evaluate. (default=`v1.1.0`)                                                                                             |
+| `multi_only`  | Flag to set if you only want to evaluate on multiple images.                                                                             |
+| `encodings_path` | Path to the file containing GM encodings of all images. Supported types: `csv`, `pkl`, and `p` (default=`./encodings/all_encodings.csv`) |
+| `metadata_path`  | Path to the directory containing metadata-files. (default=`../data/GestaltMatcherDB/v1.1.0/gmdb_metadata`)|
+
+#### Evaluate encodings with gallery encodings
 With `evaluate.py` you can evaluate case encodings using gallery encodings.
 
 There are several ways to load the encodings, either using a single file containing all encodings, or separate encoding-
