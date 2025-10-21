@@ -2,6 +2,8 @@ import os
 import json
 import time
 import base64
+
+import pandas as pd
 import requests
 import argparse
 from pathlib import Path
@@ -27,6 +29,11 @@ def analyze_image(input_file, output_dir, api_endpoint):
 
     encode_image = base64.b64encode(img_raw_original)
     encode_image_str = encode_image.decode("utf-8")
+    # 5. Check the length of the resulting base64 string
+    if not encode_image_str:
+        print(f"Error: Base64 string is empty for '{input_file}'.")
+    else:
+        print(f"Base64 encoding successful for '{input_file}'. Length: {len(encode_image_str)} characters.")
 
     # defining a params dict for the parameters to be sent to the API
     PARAMS = {"img": encode_image_str}
@@ -46,7 +53,10 @@ def analyze_image(input_file, output_dir, api_endpoint):
         output_filename = os.path.join(output_dir, "{}.json".format(file_predix))
         with open(output_filename, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, ensure_ascii=False, indent=4)
-
+        if 'suggested_syndromes_list' in output_data:
+            df = pd.DataFrame(output_data['suggested_syndromes_list'])
+            output_filename = os.path.join(output_dir, "{}.xlsx".format(file_predix))
+            df.to_excel(output_filename, index=False)
 
 def main():
     args = parse_args()

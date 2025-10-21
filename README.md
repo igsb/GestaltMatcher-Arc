@@ -32,12 +32,13 @@ Save the following files in ./saved_models/
 **Metadata**
 
 Save the following file in ./data/
-1. image_gene_and_syndrome_metadata_20082024.p (image metadata)
+1. image_gene_and_syndrome_metadata_pp4_12062025_max.p (image metadata)
+2. transformation_probabilities_07052025.csv (syndrome probability metadata)
 
 **Encodings**
 
 Save the following file in ./data/gallery_encodings/
-1. GMDB_gallery_encodings_20082024_v1.1.0_service.pkl (image encodings)
+1. GMDB_gallery_encodings_12062025_v1.1.0_service.pkl (image encodings)
 
 **Config file**
 
@@ -69,6 +70,16 @@ async def predict_endpoint(username: Annotated[str, Depends(get_current_username
 
 ```
 
+The service runs without test-time augmentation (TTA). That means we only compute 3 encodings per image (one per model in the ensemble), instead of the research pipeline’s 12 (flip + gray variants).
+
+In main.py, TTA is disabled by passing False, False to encode(...):
+
+```
+# main.py (service mode: TTA disabled)
+encoding = encode(_models, 'cpu', aligned_img, False, False)
+```
+The two boolean flags correspond to use_flip_tta and use_gray_tta. Setting both to False disables TTA.
+
 ### Send request
 You can send a single image or multiple images in a folder to the api via **send_image_api.py**.
 ```
@@ -83,9 +94,15 @@ python send_image_api.py --case_input demo_images/cdls_demo.png --output_dir out
 
 ### Results
 The results will be saved in a file with JSON format. There are three information stored in the file.
-1. case_id: the original filename without file extension
-2. suggested_genes_list: the ranked gene list sorted by the distance
-3. suggested_syndromes_list: the ranked syndrome list sorted by the distance
+case_id: the original filename without file extension
+suggested_genes_list: the ranked gene list sorted by the distance
+suggested_syndromes_list: the ranked syndrome list sorted by the distance
+1. case_id: original filename (without extension).
+2. model_version: GestaltMatcher-Arc model release used for encoding (e.g., v1.1.0).
+3. gallery_version: version/date of the gallery encodings used (e.g., 27.01.2025).
+4. suggested_genes_list: ranked genes (ascending by cosine distance).
+5. suggested_syndromes_list: ranked syndromes (ascending by cosine distance).
+6. suggested_patients_list: nearest individual patients in GMDB (ascending by cosine distance).
 
 #### suggested_genes_list (for variants prioritization)
 A gene list sorted by the distance in ascending order which can be used for variant prioritization.
@@ -93,7 +110,7 @@ A gene list sorted by the distance in ascending order which can be used for vari
 * **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
 * **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
 * **gene_entrez_id and gene_name** the gene id and gene name.
-* **gestalt score** is the same as the distance.
+* **gestalt score** is 1.3 - distance.
 
 **Note:** some syndromes have no gene associated because they are the chromosomal abnormality or huge deletion that cover
 multiple genes. We still keep them in the entry. For example, WILLIAMS-BEUREN SYNDROME; WBS has no gene associated in OMIM, so we use gene_name: WILLIAMS-BEUREN SYNDROME; WBS and gene_entrez_id: null for this entry.
@@ -102,30 +119,30 @@ Please filter out this kind of entry with null gene_entrez_id if you do need the
 ```angular2html
 {    
     "case_id": "cdls_demo",
-    "model_version": "v1.0.3",
-    "gallery_version": "v1.0.3",
+    "model_version": "v1.1.0",
+    "gallery_version": "12.06.2025",
     "suggested_genes_list": [
         {
             "gene_name": "NIPBL",
             "gene_entrez_id": "25836",
-            "distance": 0.44,
-            "gestalt_score": 0.44,
+            "distance": 0.442,
+            "gestalt_score": 0.858,
             "image_id": "4883",
             "subject_id": "3546"
         },
         {
             "gene_name": "SMC1A",
             "gene_entrez_id": "8243",
-            "distance": 0.516,
-            "gestalt_score": 0.516,
+            "distance": 0.527,
+            "gestalt_score": 0.773,
             "image_id": "8513",
             "subject_id": "5656"
         },
         {
             "gene_name": "HDAC8",
             "gene_entrez_id": "55869",
-            "distance": 0.516,
-            "gestalt_score": 0.516,
+            "distance": 0.527,
+            "gestalt_score": 0.773,
             "image_id": "8513",
             "subject_id": "5656"
         },...
@@ -141,35 +158,123 @@ A syndrome list sorted by the distance in ascending order.
 * **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
 * **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
 * **syndrome_name and omim_id** the syndrome name and omim id.
-* **gestalt score** is the same as the distance.
+* **gestalt score** is 1.3 - distance.
+* **ACMG_PP4** (experimental feature): categorical strength of phenotype evidence (e.g., very_strong, strong, moderate, supporting) for PP4 
+* **ACMG_PP4_support** (experimental feature): "Yes"/"No" flag indicating whether the phenotype evidence supports PP4 
+* **probability**  (experimental feature): probability for this syndrome given the facial gestalt (0–1). When it is null, it means there is no enough data for supporing this disorder.
+* c**i_lower, ci_upper** (experimental feature): confidence interval bounds for probability
+
 ```angular2html
     "suggested_syndromes_list": [
         {
             "syndrome_name": "Cornelia de Lange syndrome",
             "omim_id": 122470,
-            "distance": 0.44,
-            "gestalt_score": 0.44,
+            "distance": 0.442,
+            "gestalt_score": 0.858,
             "image_id": "4883",
-            "subject_id": "3546"
+            "ACMG_PP4": "very_strong",
+            "ACMG_PP4_support": "Yes",
+            "subject_id": "3546",
+            "probability": 0.999716,
+            "ci_lower": 0.999483,
+            "ci_upper": 0.999844
         },
         {
             "syndrome_name": "DDX23",
             "omim_id": "",
-            "distance": 0.575,
-            "gestalt_score": 0.575,
+            "distance": 0.612,
+            "gestalt_score": 0.688,
             "image_id": "8998",
-            "subject_id": "5949"
+            "ACMG_PP4": "strong",
+            "ACMG_PP4_support": "Yes",
+            "subject_id": "5949",
+            "probability": null,
+            "ci_lower": null,
+            "ci_upper": null
         },
         {
-            "syndrome_name": "SMITH-MAGENIS SYNDROME; SMS",
-            "omim_id": 182290,
-            "distance": 0.699,
-            "gestalt_score": 0.699,
-            "image_id": "5961",
-            "subject_id": "4239"
+            "syndrome_name": "CEREBELLAR, OCULAR, CRANIOFACIAL, AND GENITAL SYNDROME; COFG",
+            "omim_id": 618479,
+            "distance": 0.697,
+            "gestalt_score": 0.603,
+            "image_id": "2977",
+            "ACMG_PP4": "moderate",
+            "ACMG_PP4_support": "Yes",
+            "subject_id": "2179",
+            "probability": 0.006578,
+            "ci_lower": 0.002396,
+            "ci_upper": 0.017924
+        },
+        {
+            "syndrome_name": "KBG SYNDROME; KBGS",
+            "omim_id": 148050,
+            "distance": 0.7,
+            "gestalt_score": 0.6,
+            "image_id": "11630",
+            "ACMG_PP4": "moderate",
+            "ACMG_PP4_support": "Yes",
+            "subject_id": "7291",
+            "probability": 0.00551,
+            "ci_lower": 0.004266,
+            "ci_upper": 0.007114
         },...
     ]
 ```
+
+#### suggested_patients_list
+A list of the most similar individual patients. Use this to review visual matches and linked diagnoses. Each entry:
+* **distance** is the cosine distance to the nearest image with the gene in the gallery. A smaller distance indicates a higher similarity.
+* **image_id** is the image_id in GestaltMatcher Database which is the nearest image of that gene in the gallery.
+* **subject_id** is the patient_id in GestaltMatcher Database which is the nearest patient of that gene in the gallery.
+* **syndrome_name and omim_id** the syndrome name and omim id.
+* **gene_entrez_id and gene_name** the gene id and gene name.
+* **gestalt score** is 1.3 - distance.
+
+```angular2html
+    "suggested_patients_list": [
+        {
+            "subject_id": 3546,
+            "gene_name": "NIPBL",
+            "gene_entrez_id": "25836",
+            "distance": 0.442,
+            "gestalt_score": 0.858,
+            "image_id": "4883",
+            "syndrome_name": "CORNELIA DE LANGE SYNDROME 1, Cornelia de Lange syndrome",
+            "omim_id": "122470, PS122470"
+        },
+        {
+            "subject_id": 9929,
+            "gene_name": "NIPBL",
+            "gene_entrez_id": "25836",
+            "distance": 0.487,
+            "gestalt_score": 0.813,
+            "image_id": "16336",
+            "syndrome_name": "CORNELIA DE LANGE SYNDROME 1, Cornelia de Lange syndrome",
+            "omim_id": "122470, PS122470"
+        },
+        {
+            "subject_id": 10871,
+            "gene_name": "NIPBL",
+            "gene_entrez_id": "25836",
+            "distance": 0.506,
+            "gestalt_score": 0.794,
+            "image_id": "18120",
+            "syndrome_name": "CORNELIA DE LANGE SYNDROME 1, Cornelia de Lange syndrome",
+            "omim_id": "122470, PS122470"
+        },
+        {
+            "subject_id": 3525,
+            "gene_name": "NIPBL",
+            "gene_entrez_id": "25836",
+            "distance": 0.506,
+            "gestalt_score": 0.794,
+            "image_id": "4862",
+            "syndrome_name": "CORNELIA DE LANGE SYNDROME 1, Cornelia de Lange syndrome",
+            "omim_id": "122470, PS122470"
+        },...
+    ]
+```
+
 ## Step-by-step setup
 ### Environment
 Please use python version 3.8 or (3.7+), and the package listed in requirements.txt.
