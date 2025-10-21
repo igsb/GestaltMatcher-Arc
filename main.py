@@ -19,8 +19,13 @@ from typing import Annotated
 
 security = HTTPBasic()
 
+
+# generate a function to read csv file. each row has image id and patient id. Make a dictionary and each entry is image id, and the value is patient id.
+
+
+
+
 with open('config.json', 'r') as config_file:
-    print(1233445)
     config = json.load(config_file)
 
 USERNAME = config.get('username')
@@ -59,16 +64,31 @@ async def lifespan(app: FastAPI):
     global _images_genes_dict
     global _genes_metadata_dict
     global _synds_metadata_dict
+    global _synds_probabilities_dict
     _models = get_models()
     _cropper_model, _device = load_cropper_model()
     # Load synd dict
-    with open(os.path.join("data", "image_gene_and_syndrome_metadata_20082024.p"), "rb") as f:
+
+    with open(os.path.join("data", "image_gene_and_syndrome_metadata_pp4_12062025_max.p"), "rb") as f:
         data = pickle.load(f)
     _images_synds_dict = data["disorder_level_metadata"]
     _images_genes_dict = data["gene_level_metadata"]
     _genes_metadata_dict = data["gene_metadata"]
     _synds_metadata_dict = data["disorder_metadata"]
     _gallery_df = get_gallery_encodings_set(_images_synds_dict)
+
+    df = pd.read_csv(os.path.join("data", "transformation_probabilities_07052025.csv"), sep=",")
+
+    _synds_probabilities_dict = {
+        row["syndrome"]: {
+            "(Intercept)": row["(Intercept)"],
+            "syn_scores": row["syn_scores"],
+            "v_00": row["v_00"],
+            "v_10": row["v_10"],
+            "v_11": row["v_11"]
+        }
+        for _, row in df.iterrows()
+    }
 
     yield
 
@@ -105,13 +125,14 @@ async def predict_endpoint(username: Annotated[str, Depends(get_current_username
     encode_time = time.time()
     try:
         result = predict(encoding,
-                         _gallery_df,
-                         _images_synds_dict,
-                         _images_genes_dict,
-                         _genes_metadata_dict,
-                         _synds_metadata_dict)
+                             _gallery_df,
+                             _images_synds_dict,
+                             _images_genes_dict,
+                             _genes_metadata_dict,
+                             _synds_metadata_dict,
+                             _synds_probabilities_dict)
     except Exception as e:
-        return {"message": "Evaluation error."}
+        return {"message": "Evaluation error.", "error": str(e)}
     finished_time = time.time()
 
     print('Crop: {:.2f}s'.format(align_time-start_time))
