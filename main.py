@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI):
     _cropper_model, _device = load_cropper_model()
     # Load synd dict
 
-    with open(os.path.join("data", "image_gene_and_syndrome_metadata_pp4_12062025_max.p"), "rb") as f:
+    with open(os.path.join("data", "image_gene_and_syndrome_metadata_pp4_19112025_v112.p"), "rb") as f:
         data = pickle.load(f)
     _images_synds_dict = data["disorder_level_metadata"]
     _images_genes_dict = data["gene_level_metadata"]

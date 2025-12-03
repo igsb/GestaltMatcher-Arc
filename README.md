@@ -25,20 +25,20 @@ Please contact us to obtain the following files and store them in the correspond
 
 Save the following files in ./saved_models/
 1. Resnet50_Final.pth (for the face alignment)
-2. s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
-3. s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
+2. s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
+3. s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
 4. glint360k_r100.onnx (model 3 for the encoding)
 
 **Metadata**
 
 Save the following file in ./data/
-1. image_gene_and_syndrome_metadata_pp4_12062025_max.p (image metadata)
+1. image_gene_and_syndrome_metadata_pp4_19112025_v112.p (image metadata)
 2. transformation_probabilities_07052025.csv (syndrome probability metadata)
 
 **Encodings**
 
 Save the following file in ./data/gallery_encodings/
-1. GMDB_gallery_encodings_12062025_v1.1.0_service.pkl (image encodings)
+1. GMDB_gallery_encodings_v1.1.2_service.pkl (image encodings)
 
 **Config file**
 
@@ -119,8 +119,8 @@ Please filter out this kind of entry with null gene_entrez_id if you do need the
 ```angular2html
 {    
     "case_id": "cdls_demo",
-    "model_version": "v1.1.0",
-    "gallery_version": "12.06.2025",
+    "model_version": "v1.1.2",
+    "gallery_version": "19.11.2025",
     "suggested_genes_list": [
         {
             "gene_name": "NIPBL",

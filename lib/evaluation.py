@@ -249,7 +249,7 @@ def format_syndrome_json(results, synds_metadata_dict, images_dict, case_id='', 
                   'ACMG_PP4_support': pp4_support,
                   'subject_id': str(images_dict[int(image_id)]['patient_id'])}
 
-        if name in synds_probabilities_dict:
+        if name in synds_probabilities_dict and False:
             params = synds_probabilities_dict[name]
 
             intercept = float(params["(Intercept)"])
@@ -333,7 +333,7 @@ def save_to_json(results, output_dir, output_file):
 
 def get_gallery_encodings_set(images_synds_dict):
     gallery_list = []
-    gallery_input = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_12062025_v1.1.0_service.pkl')
+    gallery_input = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_v1.1.2_service.pkl')
     gallery_df = get_encodings_set(gallery_input, gallery_list)
     image_ids = [str(i) for i in images_synds_dict.keys()]
     gallery_df = gallery_df[gallery_df["img_name"].isin(image_ids)]
@@ -398,8 +398,8 @@ def predict(test_df, _gallery_df, images_synds_dict, images_genes_dict,
     # print('Format: {:.2f}s'.format(output_finished_time-get_genes_time))
     # print('Total: {:.2f}s'.format(output_finished_time-start_time))
 
-    output = {"model_version": "v1.1.0",
-              "gallery_version": "12.06.2025",
+    output = {"model_version": "v1.1.2",
+              "gallery_version": "19.11.2025",
               "suggested_genes_list": gene_output_list,
               "suggested_syndromes_list": synd_output_list,
               "suggested_patients_list": subject_output_list}
