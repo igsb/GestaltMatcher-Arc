@@ -8,7 +8,6 @@ import datetime
 import os
 import random
 
-import onnx
 import torch
 import numpy as np
 from onnx2torch import convert
@@ -18,7 +17,7 @@ import albumentations as A
 from lib.models.my_arcface import MyArcFace
 
 saved_model_dir = "saved_models"
-FOLD = 0
+
 
 # Preprocessing used for ArcFace input image inference
 def preprocess(img, img_size=112, gray=False, flip=False):
@@ -49,8 +48,10 @@ def parse_args():
                         help='random seed (default: 11)')
     parser.add_argument('--data_dir', default='../data/GestaltMatcherDB/v1.1.0/gmdb_crops', dest='data_dir',
                         help='Path to the data directory containing the images to run the model on.')
-    parser.add_argument('--weight_dir', default='saved_models', dest='weight_dir',
+    parser.add_argument('--weight_dir', default='saved_models/', dest='weight_dir',
                         help='Path to the directory containing the model weights.')
+    parser.add_argument('--subset', default='eu', dest='subset',
+                        help='Subset of models to use; options: "eu" or "others"')
 
     return parser.parse_args()
 
@@ -59,9 +60,8 @@ def predict(models, device, data, args):
     for model in models:
         model.eval()
 
-    f = open(f"all_encodings", "w+")
-    # f = open(os.path.join(*args.data_dir.split('/')[:-1], f"encodings_{args.data_dir.split('/')[-2]}.csv"), "w+")
-    f.write(f"img_name;model;flip;gray;class_conf;representations\n")
+    f = open(f"cohen_encodings_{'EU' if args.subset == 'eu' else 'Others'}.csv", "w+")
+    f.write(f"img_name;model;class_conf;representations\n")
 
     tick = datetime.datetime.now()
     with torch.no_grad():
@@ -69,11 +69,9 @@ def predict(models, device, data, args):
             print(f"{img_path=}")
             img = cv2.imread(os.path.join(args.data_dir, img_path))
 
-            # model ensemble
             for idx, model in enumerate(models):
-                # test time augmentation
-                for flip in [False,True]:
-                    for gray in [False,True]:
+                for flip in [False]:#,True]:
+                    for gray in [False]:#,True]:
                         img_p = preprocess(img,
                                            gray=gray,
                                            flip=flip
@@ -87,8 +85,7 @@ def predict(models, device, data, args):
                             pred = pred.squeeze().tolist()
 
                         pred_rep = F.normalize(pred_rep)
-                        f.write(f"{img_path};m{idx};{int(flip)};{int(gray)};"
-                                f"{pred};{pred_rep.squeeze().tolist()}\n")
+                        f.write(f"{img_path};m{idx};{pred};{pred_rep.squeeze().tolist()}\n")
 
     f.flush()
     f.close()
@@ -118,27 +115,26 @@ def main():
     # Create model
     def get_model(weights, device='cuda'):
         if ".onnx" in weights:
-            model = convert(onnx.load(weights)).to(device)
+            model = convert(weights).to(device)
         elif ".pth" in weights:
             model = torch.load(weights, map_location=device).to(device)
-        model.eval()
         print(f"Loaded model: {weights}")
         return model
 
-    # mix
-    model1 = get_model(os.path.join(args.weight_dir,
-                                    # "s1_r50_gmdb_v1.1.0.pth"),
-                                    "s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth"),
-                       device=device)
-    # finetuned r100
-    model2 = get_model(os.path.join(args.weight_dir,
-                                    # "s2_r100_gmdb_v1.1.0.pth"),
-                                    "s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth"),
-                       device=device)
-    # original r100
-    model3 = get_model(os.path.join(args.weight_dir, "glint360k_r100.onnx"), device=device)
+    # Load all models from EU+EU* or EU+Other
+    if args.subset == "others":
+        # EU+Other: s8110{i}
+        models = [get_model(os.path.join(args.weight_dir,
+                                        f"s8110{i}_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth"),
+                           device=device) for i in range(1,6)]
+    elif args.subset == "eu":
+        # EU+EU*: s811{10+i}
+        models = [get_model(os.path.join(args.weight_dir,
+                                        f"s811{10+i}_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth"),
+                           device=device) for i in range(1,6)]
 
-    models = [model1, model2, model3]
+    print(f"Loaded {len(models)} {'EU+EU*' if args.subset == 'eu' else 'EU+Others'} models.")
+
     predict(models, device, data, args)
 
 

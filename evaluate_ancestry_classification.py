@@ -17,7 +17,7 @@ def main():
     # Load parameter arguments
     args = parse_args()
 
-    results_dir = './experiments_anc'
+    results_dir = './experiments_ancestry'
 
     if args.set == 'eu':
         print("Analyzing for EU+EU*:")
@@ -33,9 +33,11 @@ def main():
     top5s = []
     for i in range(1,6):
         if args.set == 'eu':
-            file_path = os.path.join(results_dir, f'performance_s{i}_seed{i}_eu.npy')
+            # file_path = os.path.join(results_dir, f'performance_s{i}_seed{i}_eu.npy')
+            file_path = os.path.join(results_dir, f'performance_s{81100+i+10}_seed{i}_eu.npy')
         elif args.set == 'others':
-            file_path = os.path.join(results_dir, f'performance_s{i+10}_seed{i}_all_anc.npy')
+            # file_path = os.path.join(results_dir, f'performance_s{i+10}_seed{i}_all_eth.npy')
+            file_path = os.path.join(results_dir, f'performance_s{81100+i}_seed{i}_all_eth.npy')
 
         anc, distr, top1, top5 = np.load(file_path, allow_pickle=True)
 
@@ -62,6 +64,8 @@ def main():
 
         corr_top1_res.append(corr_top1)
         corr_top5_res.append(corr_top5)
+
+        # print(f"\t{anc} ({distr} +/- {std:.1f}): {corr_top1}")
 
         print(f"\t{anc} ({distr} +/- {std:.1f}): "
               f"{corr_top1*100:.2f} +/- {np.std(top1[top1 > 0])*100:.2f}, "

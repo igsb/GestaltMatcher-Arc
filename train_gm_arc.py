@@ -1,6 +1,6 @@
+import os
 import argparse
 import datetime
-import os
 import random
 
 import numpy as np
@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from lib.datasets.utils import get_train_and_val_datasets
 from lib.models.my_arcface import MyArcFace
-from lib.utils import seed_worker
+from lib.utils_functions import seed_worker
 
 
 # To parse command line arguments
@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument('--model_type', default='glint360k_r50', dest='model_type',
                         help='model backend to use')
     parser.add_argument('--in_channels', default=3, dest='in_channels', type=int,
-                        help='number of color channels of the images used as input (default: 3)')
+                        help='number of color channels of the images used as input (default: 1)')
     parser.add_argument('--img_size', default=112, dest='img_size', type=int,
                         help='input image size of the model (default: 112)')
     parser.add_argument('--unfreeze', action='store_false', default=True, dest='freeze',
@@ -59,6 +59,10 @@ def parse_args():
                         help='version of the dataset to use (default="v1.1.0")')
     parser.add_argument('--lookup_table', default='', dest='lookup_table_path',
                         help='lookup table path, use if you want to load path instead of generation a lookup table (default = "")')
+    parser.add_argument('--only_eu', action='store_true', default=False, dest='remove_nonEuropeans',
+                        help='flag for ethnicity experiment to include only EU or also other ethnicities')
+    parser.add_argument('--data_seed', type=int, default=-1,
+                        help='random seed for data splitting (default: -1)')
 
     # File locations
     parser.add_argument('--data_dir', default='../data', dest='data_dir',
@@ -96,7 +100,11 @@ def train(args, model, device, train_loader, optimizer, epochs=-1, val_loader=No
 
     for epoch in range(1, epochs + 1):
         epoch_loss = 0.
-        for batch_idx, (data, target) in enumerate(train_loader):
+        for batch_idx, data_iter in enumerate(train_loader):
+            if len(data_iter) == 3:
+                (data, target, _) = data_iter
+            else:
+                (data, target) = data_iter
 
             data = data.to(device, dtype=torch.float32)
             target = target.to(device, dtype=torch.int64).unsqueeze(1)
@@ -164,14 +172,15 @@ def train(args, model, device, train_loader, optimizer, epochs=-1, val_loader=No
             #scheduler.step(avg_val_loss)
 
         # Save model
-        print(
-            f"Saving model in: "
-            f"s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}_{args.dataset_version}"
-            f"_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt")
-        torch.save(
-            model.state_dict(),
-            os.path.join(args.weight_dir,f"s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}"
-            f"_{args.dataset_version}_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt"))
+        if epoch % 10 == 0:
+            print(
+                f"Saving model in: "
+                f"s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}_{args.dataset_version}"
+                f"_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt")
+            torch.save(
+                model.state_dict(),
+                f"{args.weight_dir}/s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}"
+                f"_{args.dataset_version}_bs{args.batch_size}_size{args.img_size}_channels{args.in_channels}_e{epoch}.pt")
 
     if args.use_tensorboard:
         writer.flush()
@@ -185,13 +194,28 @@ def validate(model, device, val_loader, args, out=False):
     top_acc = 0.
     top_5_acc = 0.
 
+    all_preds = []
+    all_targets = []
+    all_ethns = []
+
     pred_per_class = [[] for _ in range(args.num_classes)]
+
+    if args.is_ancestry_experiment:
+        num_ethnicity_classes = len(val_loader.dataset.get_lookup_table_ethnicity())
+        top_acc_per_eth = np.zeros(num_ethnicity_classes)
+        top_5_acc_per_eth = np.zeros(num_ethnicity_classes)
 
     tick = datetime.datetime.now()
     val_size = 0
     with torch.no_grad():
         diag = torch.eye(args.val_bs, device=device)
-        for idx, (data, target) in enumerate(val_loader):
+        for idx, data_iter in enumerate(val_loader):
+            if len(data_iter) == 3:
+                (data, target, eth) = data_iter
+                eth = eth.to(device, dtype=torch.int64).unsqueeze(1)
+            else:
+                (data, target) = data_iter
+
             data = data.to(device, dtype=torch.float32)
             target = target.to(device, dtype=torch.int64).unsqueeze(1)
 
@@ -199,11 +223,7 @@ def validate(model, device, val_loader, args, out=False):
             pred, pred_rep = pred.detach(), pred_rep.detach()
             val_ce_loss += F.cross_entropy(pred, target.view(-1), weight=args.ce_weights, reduction='sum').item()
 
-            if out:
-                for i in range(args.val_bs):
-                    print(f"{target[i].item()},{pred[i].tolist()}")
-
-            # some times the last batch might not be the same size
+            # sometimes the last batch might not be the same size - though we generally use bs = 1
             bs = len(data)
             if bs != args.val_bs:
                 diag = torch.eye(len(data), device=device)
@@ -218,24 +238,76 @@ def validate(model, device, val_loader, args, out=False):
             if bs == 1:
                 # append a ranked list of predictions to the correct class
                 pred_per_class[target[0]].append(top_idx[0].cpu().numpy())
+                if args.is_ancestry_experiment:
+                    top_acc_per_eth[eth[0]] += (1 if target == max_idx else 0)
+                    top_5_acc_per_eth[eth[0]] += (1 if target in top_idx else 0)
 
             val_size += bs
+
+            # Store the info on each image to save to a np-file later
+            if out:
+                all_preds.append(np.argsort(pred.cpu().numpy())[0][::-1])
+                all_targets.append(target.cpu().numpy()[0])
+                if args.is_ancestry_experiment:
+                    all_ethns.append(eth.cpu().numpy()[0])
+
 
     top_acc = torch.true_divide(top_acc, val_size).item()
     top_5_acc = torch.true_divide(top_5_acc, val_size).item()
 
     # calculate the mean of the average performance per class
     mean_average_top_1 = np.mean([np.mean([(class_idx == prediction[0]) for prediction in class_pred_list])
-                                  for class_idx, class_pred_list in enumerate(pred_per_class)])
+                                  for class_idx, class_pred_list in enumerate(pred_per_class)
+                                  if len(class_pred_list) > 0])
     mean_average_top_5 = np.mean([np.mean([(class_idx in prediction) for prediction in class_pred_list])
-                                  for class_idx, class_pred_list in enumerate(pred_per_class)])
+                                  for class_idx, class_pred_list in enumerate(pred_per_class)
+                                  if len(class_pred_list) > 0])
 
     model.train()
 
     print(f"Average BCE Loss ({val_ce_loss / val_size}) during validation")
-    print(f"\tTop-1 accuracy: {top_acc}, Top-5 accuracy: {top_5_acc}")
-    print(f"\tMean Top-1 accuracy: {mean_average_top_1}, Mean top-5 accuracy: {mean_average_top_5}")
+    print(f"\tTop-1 accuracy: {(top_acc*100):.2f}%, "
+          f"top-5 accuracy: {(top_5_acc*100):.2f}%")
+    print(f"\tMean top-1 accuracy: {(mean_average_top_1*100):.2f}%, "
+          f"mean top-5 accuracy: {(mean_average_top_5*100):.2f}%")
+
+    # PER ETHNICITY PERFORMANCE
+    if args.is_ancestry_experiment:
+        eth_lut = val_loader.dataset.get_lookup_table_ethnicity()
+        eth_distr = val_loader.dataset.get_distribution_ethnicity()
+
+        print(f"\tMean top-1 accuracy over ethnic groups: "
+              f"{(np.mean(top_acc_per_eth/val_loader.dataset.get_distribution_ethnicity())*100):.2f}%,"
+              f"\tmean top-5 accuracy over ethnic groups: "
+              f"{(np.mean(top_5_acc_per_eth/val_loader.dataset.get_distribution_ethnicity())*100):.2f}%")
+
+        print(f"Top-1 accuracy per ethnic group:")
+        [print(f"\t\t{eth} ({freq}): {(acc*100):.2f}") for eth, freq, acc in
+            zip(eth_lut, eth_distr, top_acc_per_eth/val_loader.dataset.get_distribution_ethnicity())]
+        print(f"Top-5 accuracy per ethnic group:")
+        [print(f"\t\t{eth} ({freq}): {(acc5*100):.2f}") for eth, freq, acc5 in
+            zip(eth_lut, eth_distr, top_5_acc_per_eth/val_loader.dataset.get_distribution_ethnicity())]
+
     print(f"Elapsed time during validation: {(datetime.datetime.now() - tick).total_seconds():.1f}s")
+
+    if out:
+        # save an np.array with image_idx, ethnicity, target, pred
+        if args.is_ancestry_experiment:
+            idxs = list(range(len(all_preds)))
+            output_array = np.array([idxs, all_ethns, all_targets, all_preds], dtype=object)
+            np.save(f"experiments_ancestry/results_s{args.session}_seed{args.data_seed}_{'eu' if args.remove_nonEuropeans else 'all_eth'}.npy",
+                    output_array)  # , allow_pickle=True)
+            print(f"Saved final validation results ([idx, ethn_id, target_disorder, pred_disorders] "
+                  f"to: {f'experiments_ancestry/results_s{args.session}_seed{args.data_seed}.npy'}")
+
+        ## TODO: save performance
+        top_1 = top_acc_per_eth/val_loader.dataset.get_distribution_ethnicity()
+        top_5 = top_5_acc_per_eth/val_loader.dataset.get_distribution_ethnicity()
+        output_array = np.array([eth_lut, eth_distr, top_1, top_5]) #, ranks?])
+        np.save(f"experiments_ancestry/performance_s{args.session}_seed{args.data_seed}_{'eu' if args.remove_nonEuropeans else 'all_eth'}.npy",
+                output_array)  # , allow_pickle=True)
+        print(f"Saved final validation performance ([eth_id, distr, top-1, top-5, ranks?] "
+              f"to: {f'experiments_ancestry/performance_s{args.session}_seed{args.data_seed}.npy'}")
 
     return val_ce_loss / val_size, top_acc, top_5_acc, mean_average_top_1, mean_average_top_5
 
@@ -243,6 +315,9 @@ def validate(model, device, val_loader, args, out=False):
 def main():
     # Training settings
     args = parse_args()
+
+    # Check if we're running an ancestry-related experiment, and set a flag
+    args.is_ancestry_experiment = True if args.data_seed >= 0 else False
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -282,7 +357,7 @@ def main():
     # Dataset and dataloaders
     kwargs = {}
     if use_cuda:
-        kwargs.update({'num_workers': (0 if args.local else 12), 'pin_memory': True})
+        kwargs.update({'num_workers': (0 if args.local else 16), 'pin_memory': True})
 
     dataset_train = dataset_val = None
     lookup_table = None
@@ -291,7 +366,9 @@ def main():
     # Create and get the training and validation datasets
     dataset_train, dataset_val = get_train_and_val_datasets(args.dataset, args.dataset_type, args.dataset_version,
                                                             args.img_size, args.in_channels, args.data_dir,
-                                                            img_postfix='_aligned')
+                                                            img_postfix='_aligned',
+                                                            remove_nonEuropeans=args.remove_nonEuropeans,
+                                                            data_seed=args.data_seed)
 
     # Get the number of classes from the dataset
     args.num_classes = dataset_train.get_num_classes()
@@ -310,7 +387,9 @@ def main():
 
     # Write lookup table to file if we generated a lookup table for GMDB (i.e. when we don't supply one)
     if (lookup_table is not None) and (args.dataset != 'casia') and (args.lookup_table_path == ''):
-        f = open(f"lookup_table_{args.dataset}_{args.dataset_version}.txt", "w+")
+        if args.is_ancestry_experiment:
+            os.makedirs("experiments_ancestry", exist_ok=True)
+        f = open(f"{'experiments_ancestry/' if args.is_ancestry_experiment else ''}lookup_table_{args.dataset}_{args.dataset_version}{('_fold'+str(args.data_seed)) if args.data_seed >= 0 else ''}.txt", "w+")
         f.write("index_id to disorder_id\n")
         f.write(f"{lookup_table}")
         f.flush()
@@ -320,10 +399,18 @@ def main():
     args.val_bs = 1
 
     # Create dataloaders
-    train_loader = torch.utils.data.DataLoader(dataset_train, **kwargs, shuffle=True, batch_size=args.batch_size,
-                                               worker_init_fn=seed_worker, drop_last=True)
-    val_loader = torch.utils.data.DataLoader(dataset_val, pin_memory=True, num_workers=0, shuffle=False,
+    train_loader = torch.utils.data.DataLoader(dataset_train,
+                                               pin_memory=True,
+                                               shuffle=True,
+                                               batch_size=args.batch_size,
+                                               num_workers=(0 if args.local else 16),
+                                               worker_init_fn=seed_worker,
+                                               drop_last=True)
+    val_loader = torch.utils.data.DataLoader(dataset_val,
+                                             pin_memory=True,
+                                             shuffle=False,
                                              drop_last=False,
+                                             num_workers=(0 if args.local else 12),
                                              worker_init_fn=seed_worker,
                                              batch_size=args.val_bs)
 
@@ -336,8 +423,7 @@ def main():
     print(f"Weighted cross entropy weights: {args.ce_weights}")
 
     # Create model
-    model = MyArcFace(args.num_classes, dataset_base=os.path.join(args.weight_dir, f'{args.model_type}.onnx'),
-                      device=device, freeze=True).to(device)
+    model = MyArcFace(args.num_classes, dataset_base=f'saved_models/{args.model_type}.onnx', device=device, freeze=True).to(device)
     print(f"Created {'frozen ' if args.freeze else ''}{args.model_type} model with {args.in_channels} in channel"
           f"{'s' if args.in_channels > 1 else ''}, 512d feature dimensionality and {args.num_classes} classes")
 
@@ -368,12 +454,12 @@ def main():
     train(args, model, device, train_loader, optimizer, val_loader=val_loader, scheduler=scheduler)
 
     ## Run final validation step with extra output
-    # validate(model, device, val_loader, args, out=True)
+    validate(model, device, val_loader, args, out=True)
 
     # Save entire model
-    torch.save(model, os.path.join(args.weight_dir, f"s{args.session}_{args.model_type}_512d_{args.dataset}"
-                                                    f"_{args.dataset_type}_{args.dataset_version}_bs{args.batch_size}"
-                                                    f"_size{args.img_size}_channels{args.in_channels}_last_model.pth"))
+    torch.save(model, f"{args.weight_dir}/s{args.session}_{args.model_type}_512d_{args.dataset}_{args.dataset_type}"
+                      f"_{args.dataset_version}_bs{args.batch_size}_size{args.img_size}"
+                      f"_channels{args.in_channels}_last_model.pth")
 
 
 if __name__ == '__main__':
