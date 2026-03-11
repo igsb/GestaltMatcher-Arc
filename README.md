@@ -329,8 +329,8 @@ Save the following files in ./saved_models/
 3. glint360k_r100.onnx (base pre-trained model for model b)
 
 Trained models by our group:
-1. s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
-2. s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
+1. s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
+2. s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
 
 ### Crop and align faces
 In order to get aligned images, you have to run `crop_align.py`. It is possible to either crop and align a single image,
@@ -344,8 +344,8 @@ The face cropper requires the model-weights "Resnet50_Final.pth". Remember to do
 If you don't have GPU, please use `--no_cuda` to run on cpu mode.
 
 ```
-# crop and align the original v1.1.0 
-python .\crop_align.py --data ..\data\GestaltMatcherDB\v1.1.0\gmdb_images --save_dir .\data\GestaltMatcherDB\v1.1.0\gmdb_align
+# crop and align the original v1.1.2 
+python .\crop_align.py --data ..\data\GestaltMatcherDB\v1.1.2\gmdb_images --save_dir .\data\GestaltMatcherDB\v1.1.2\gmdb_align
 
 # crop and align the test image and obtained the aligned image in .\demo_images\cdls_demo_alinged.jpg
 python .\crop_align.py --data .\demo_images\cdls_demo.png --save_dir .\demo_images\
@@ -366,8 +366,8 @@ When setting any of those to 'None' they will not be included in the ensemble.
 
 To reproduce our Gestalt Matcher model listed in the table by training from scratch, use:
 ```
-python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.0 
-python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.0 
+python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.2 
+python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.2 
 ```
 
 You may choose whatever seed and session you find useful.
@@ -393,22 +393,22 @@ For machines without a GPU, please use `--no_cuda`.
 ```
 # encode the whole GMDB dataset to obtain the gallery encodings
 python predict.py 
-  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth 
-  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth 
+  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth 
+  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth 
   --save_as_pickle 
-  --data ../data/GestaltMatcherDB/v1.1.0/gmdb_align/ 
+  --data ../data/GestaltMatcherDB/v1.1.2/gmdb_align/ 
   --save_dir ./data/gallery_encodings/ 
-  --output_name GMDB_gallery_encodings_v1.1.0.pkl
+  --output_name GMDB_gallery_encodings_v1.1.2.pkl
   
  # encode the image you want to test
- # the output will be in ./data/demo_test/test_encodings_v1.1.0.pkl
+ # the output will be in ./data/demo_test/test_encodings_v1.1.2.pkl
  python predict.py 
-  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth 
-  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth 
+  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth 
+  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth 
   --save_as_pickle 
   --data demo_images/cdls_demo_aligned.jpg 
   --save_dir ./data/demo_test/ 
-  --output_name test_encodings_v1.1.0.pkl
+  --output_name test_encodings_v1.1.2.pkl
 ```
 
 There are 12 encodings per image because there are three models, and test-time augmentation including flip and
