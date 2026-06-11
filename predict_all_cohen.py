@@ -60,7 +60,7 @@ def predict(models, device, data, args):
     for model in models:
         model.eval()
 
-    f = open(f"cohen_encodings_{'EU' if args.subset == 'eu' else 'Others'}.csv", "w+")
+    f = open(f"experiments_ancestry/cohen_encodings_{'EU' if args.subset == 'eu' else 'Others'}.csv", "w+")
     f.write(f"img_name;model;class_conf;representations\n")
 
     tick = datetime.datetime.now()
