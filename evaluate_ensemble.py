@@ -72,9 +72,10 @@ def prep_csv(df, is_pickle=False):
     return df
 
 # Get all predictions
-#representation_df = pd.read_csv("all_encodings.csv", delimiter=";")
-encoding_file = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_v1.1.0.pkl')
-representation_df = prep_csv(pd.read_pickle(encoding_file), is_pickle=True)
+# representation_df = pd.read_csv("all_encodings.csv", delimiter=";")
+representation_df =  prep_csv(pd.read_csv("all_encodings.csv", delimiter=";"))
+# encoding_file = os.path.join('data', 'gallery_encodings', 'GMDB_gallery_encodings_v1.1.0.pkl')
+# representation_df = prep_csv(pd.read_pickle(encoding_file), is_pickle=True)
 
 # GestaltMatcher test: Frequent, gallery: Frequent
 gallery_df = pd.read_csv(os.path.join(data_path, 'gmdb_frequent_gallery_images_v1.1.0.csv'))
