@@ -16,12 +16,13 @@ simply run the code snippets provided in the "Evaluation and Reproduction"-secti
 
 ## Step-by-step setup
 ### Environment
-Please use python version 3.8 or (3.7+), and the package listed in requirements.txt.
+Code was tested using Python version 3.8 or (3.7+), and the package listed in requirements.txt.
+Deviations could lead to different results or could require some minor code changes.
 
 <strong>The following setup is verified in the following environments:</strong>
 
 * Window 11
-* RTX4090
+* RTX3090 (newer GPUs could require updating your environment)
 * cuda 11.8
 * pytorch 2.3.1</strong></p>
 
@@ -30,6 +31,7 @@ python3 -m venv env_gm
 source env_gm/Scripts/activate
 pip install -r requirements.txt
 ```
+Note: when using Linux, source pathing is likely different (e.g. `env_gm/bin/activate`)
 
 If you would like to train and evaluate with GPU, please remember to install cuda in your system.
 If you don't have GPU, please choose the CPU option (`--no_cuda`) in the following section.
@@ -87,7 +89,7 @@ If you don't have GPU, please use `--no_cuda` to run on cpu mode.
 
 ```
 # crop and align the original v1.1.0 
-python .\crop_align.py --data ..\data\GestaltMatcherDB\v1.1.0\gmdb_images --save_dir ..\data\GestaltMatcherDB\v1.1.0\gmdb_align
+python ./crop_align.py --data ../data/GestaltMatcherDB/v1.1.0/gmdb_images --save_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_crops
 ```
 
 ### Train models
@@ -108,9 +110,13 @@ To reproduce our Gestalt Matcher model listed in the table by training from scra
 python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.0 
 python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.0 
 ```
+Running these scripts require the aforementioned steps, and will output:\
+`./saved_models/s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth` : model weights\
+`./saved_models/s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth` : model weights\
+`./lookup_table_gmdb_v1.1.0.txt` : lookup tabel for syndrome ids
 
-You may choose whatever seed and session you find useful.
-`--seed 11` was used to obtain these results, others have not been tested.
+You may choose whatever seed and session you find useful.\
+`--seed 11` (default) was used to obtain these results, others have not been tested.
 
 Using the argument `--use_tensorboard` allows you to track your models training and validation curves over time.
 
@@ -125,10 +131,13 @@ You will also need to provide the location of the model weights with `--weight_d
 For machines without a GPU, please use `--no_cuda`.
 ```
 # encode the whole GMDB dataset to obtain the gallery encodings
-python predict.py 
-  --weight_dir saved_models 
-  --data_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_crops/
+python predict_ensemble.py --weight_dir saved_models --data_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_crops/
 ```
+Running this script requires the following files:\
+`./saved_models/s1_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth` : generated earlier by `train_gm_arc`\
+`./saved_models/s2_glint360k_r100_512d_gmdb__v1.1.0_bs128_size112_channels3_last_model.pth` : generated earlier by `train_gm_arc`\
+`./saved_models/glint360k_r100.onnx` : downloaded in earlier steps,\
+and outputs `./all_encodings.csv`
 
 There are 12 encodings per image because there are three models, and test-time augmentation including flip and
 color/grey. Please find more detail in our paper [Hustinx et al., WACV 2023](https://openaccess.thecvf.com/content/WACV2023/papers/Hustinx_Improving_Deep_Facial_Phenotyping_for_Ultra-Rare_Disorder_Verification_Using_Model_WACV_2023_paper.pdf). 
@@ -148,7 +157,7 @@ Note: m2 (the base ArcFace model) does not have any class confidences of interes
 ### Evaluate on the whole dataset
 The following result is evaluating the whole v1.1.0 GMDB dataset.
 ```
-python .\evaluate_ensemble.py
+python ./evaluate_ensemble.py
 
 ===========================================================
 ---------   test: Frequent, gallery: Frequent    ----------
@@ -165,6 +174,9 @@ python .\evaluate_ensemble.py
 |GMDB-rare    |9716.6  |386.4 |19.74 |31.26 |37.59 |48.58 |
 ===========================================================
 ```
+Running this script requires the following files:\
+`./lookup_table_gmdb_v1.1.0.txt` : generated during training \
+`./all_encodings.py` : generated during `predict_ensemble.py` 
 
 ## Evaluation and Reproduction
 In the paper we describe several experiments, some focussing on classification and some on clustering, some using the 
@@ -188,6 +200,11 @@ python train_gm_arc.py --paper_model a --local --session 81113 --data_seed 3 --o
 python train_gm_arc.py --paper_model a --local --session 81114 --data_seed 4 --only_eu
 python train_gm_arc.py --paper_model a --local --session 81115 --data_seed 5 --only_eu
 ```
+Running these scripts require the same files as `train_gm_arc` in the "Train models"-section, and will output the following files:\
+`./experiments_ancestry/performance_s<session>_seed<data_seed>_<all_eth / eu>.npy` : accuracies\
+`./experiments_ancestry/results_s<session>_seed<data_seed>_<all_eth / eu>.npy` : predictions per image\
+`./experiments_ancestry/lookup_table_gmdb_v1.1.0_fold<data_seed>.txt` : lookup table for syndrome ids for the `data_seed`
+
 In training these models, some results are generated and saved that will be used later.
 
 Code to reproduce Fig 5a) Top-1 and top-5 classification accuracy per ancestral group of EU + EU* vs EU + non-EU; and 
@@ -206,7 +223,10 @@ I.e., you can use the following to output the results:
 python evaluate_ancestry_classification.py --set eu
 python evaluate_ancestry_classification.py --set others
 ```
-Note: These outputs are also used to create Table 3.
+Running these scripts requires the following files:\
+`./experiments_ancestry/performance_s<session>_seed<data_seed>_<all_eth / eu>.npy` : for `data_seed` 1-5, generated during `train_gm_arc`
+`./experiments_ancestry/results_s<session>_seed<data_seed>_<all_eth / eu>.npy` : for `data_seed` 1-5, generated during `train_gm_arc`\
+Note: The outputs texts are also used to create Table 3.
 
 For Fig5a, the ancestral groups were sorted based on the top-1 standard deviation of the diverse models ([EU + non-EU]),
 creating the following figure:
@@ -218,13 +238,20 @@ use `--repeat_N` to set the number of times the random sampling of gallery image
 `--stdev` will also return the standard deviations shown in the Figure.\
 I.e., 
 `python evaluate_ancestry_clustering.py --verbose --gallery_expansion --stdev`\
-The resulting outputs are then used in the second part of `Fig5.ipynb` to create the following Figure for 5b:\
+Running this script requires:\
+`./all_encodings.csv` : generated earlier during `predict_ensemble` of the main models\
+`./lookup_table_gmdb_v1.1.0.txt` : generated during `train_gm_arc`
+
+The resulting text outputs are then used in the second part of `Fig5.ipynb` to create the following Figure for 5b:\
 ![Figure 5b](./paper_plots/fig5b_gallery_expansion.svg)
 
 **Table 1**\
 This table contains the top-N accuracy of the original GestaltMatcher, trained on all data, per category: age, sex, 
 ethnicity, and overall.
-Results for Table 1 are generated using `python evaluate_ancestry_clustering.py --verbose`.
+Results for Table 1 are generated using `python evaluate_ancestry_clustering.py --verbose`.\
+Running this script requires:\
+`./all_encodings.csv` : generated earlier during `predict_ensemble` of the main models\
+`./lookup_table_gmdb_v1.1.0.txt` : generated during `train_gm_arc`
 
 **Table 2**\
 For Table 2, we report on the performance of the normal GestaltMatcher model on test images belonging to disorders that 
@@ -238,6 +265,9 @@ python evaluate_ancestry_clustering.py --verbose --overlap --overlap_ancestry_B 
 python evaluate_ancestry_clustering.py --verbose --overlap --overlap_ancestry_B Others
 python evaluate_ancestry_clustering.py --verbose --overlap --overlap_ancestry_B Unknown
 ```
+Running this script requires:\
+`./all_encodings.csv` : generated earlier during `predict_ensemble` of the main models\
+`./lookup_table_gmdb_v1.1.0.txt` : generated during `train_gm_arc`\
 
 **Table 3**\
 As mentioned earlier, data for Table 3 is collected similarly to Fig 5a. Have a look at that section for more details. 
@@ -247,18 +277,21 @@ These results are for the experiments specifically computed for Cohen syndrome. 
 computed Table 3. However, first we need to compute the encodings of the Cohen cases for both sets of models ([EU + EU*]
 and [EU + non-EU]). To do this, run the following code:
 ```
-python predict_all_cohen --data_dir <cohen_image_dir> --subset eu
-python predict_all_cohen --data_dir <cohen_image_dir> --subset others
+python predict_all_cohen.py --data_dir <cohen_image_dir> --subset eu
+python predict_all_cohen.py --data_dir <cohen_image_dir> --subset others
 ```
+Running these scripts require the following files:\
+`./saved_models/s<session>_glint360k_r50_512d_gmdb__v1.1.0_bs64_size112_channels3_last_model.pth` : for sessions 81101-81105 and 81111-81115, generated during training of [EU + EU*] vs [EU + non-EU] models
+
 Where `<cohen_image_dir>` is the directory containing all the to-test images of patients with Cohen syndrome.
 This will save the encodings into two csv-files: `cohen_encodings_EU.csv` and `cohen_encodings_Others.csv`.
 
-Once the encodings are computed, you can run cells in `analyze_cohen.ipynb`. Make sure that `RESULTS_DIR` and 
+Once the encodings are computed, you can run cells in `./experiments_ancestry/analyze_cohen.ipynb`. Make sure that `RESULTS_DIR` and 
 `COHEN_ID`, are set to the correct values. `RESULTS_DIR` is the location where encodings, lookup tables, and Cohen 
 metadata are stored, `COHEN_ID` is the syndrome_id of Cohen in the metadata.   
 
 **Supplemental Tables 1 and 2**\
-The data for these tables can be computed using `explore_results.ipynb`, using `MIN_NUMBER_CASES_PER_SYNDROME=1` for 
+The data for these tables can be computed using `./experiments_ancestry/explore_results.ipynb`, using `MIN_NUMBER_CASES_PER_SYNDROME=1` for 
 Supp. Tables 1 and 2, and `MIN_NUMBER_CASES_PER_SYNDROME=3` only for Supp Table 2. The script needs to be run with 
 `MIN_NUMBER_CASES_PER_SYNDROME=1` and `3`, and `SUBSET='eu'` and `'others'`. 
 
