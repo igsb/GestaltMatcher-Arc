@@ -300,14 +300,13 @@ def validate(model, device, val_loader, args, out=False):
             print(f"Saved final validation results ([idx, ethn_id, target_disorder, pred_disorders] "
                   f"to: {f'experiments_ancestry/results_s{args.session}_seed{args.data_seed}.npy'}")
 
-        ## TODO: save performance
-        top_1 = top_acc_per_eth/val_loader.dataset.get_distribution_ethnicity()
-        top_5 = top_5_acc_per_eth/val_loader.dataset.get_distribution_ethnicity()
-        output_array = np.array([eth_lut, eth_distr, top_1, top_5]) #, ranks?])
-        np.save(f"experiments_ancestry/performance_s{args.session}_seed{args.data_seed}_{'eu' if args.remove_nonEuropeans else 'all_eth'}.npy",
-                output_array)  # , allow_pickle=True)
-        print(f"Saved final validation performance ([eth_id, distr, top-1, top-5, ranks?] "
-              f"to: {f'experiments_ancestry/performance_s{args.session}_seed{args.data_seed}.npy'}")
+            top_1 = top_acc_per_eth/val_loader.dataset.get_distribution_ethnicity()
+            top_5 = top_5_acc_per_eth/val_loader.dataset.get_distribution_ethnicity()
+            output_array = np.array([eth_lut, eth_distr, top_1, top_5]) #, ranks?])
+            np.save(f"experiments_ancestry/performance_s{args.session}_seed{args.data_seed}_{'eu' if args.remove_nonEuropeans else 'all_eth'}.npy",
+                    output_array)  # , allow_pickle=True)
+            print(f"Saved final validation performance ([eth_id, distr, top-1, top-5, ranks?] "
+                  f"to: {f'experiments_ancestry/performance_s{args.session}_seed{args.data_seed}.npy'}")
 
     return val_ce_loss / val_size, top_acc, top_5_acc, mean_average_top_1, mean_average_top_5
 
@@ -445,7 +444,7 @@ def main():
     ], lr=lr if lr != -1 else args.lr, weight_decay=0.)
 
     # Init scheduler
-    scheduler = lr_sched.ReduceLROnPlateau(optimizer, factor=0.5, verbose=True, min_lr=1e-5, mode="max", patience=5, threshold=5e-4)
+    scheduler = lr_sched.ReduceLROnPlateau(optimizer, factor=0.5, min_lr=1e-5, mode="max", patience=5, threshold=5e-4)
 
     ## Call explicit model weight initialization (only do this for the base task, if at all)
     # model.init_layer_weights()
