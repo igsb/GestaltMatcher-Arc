@@ -428,8 +428,8 @@ def main():
                       for am, ay in zip(meta_df.age_month.values, meta_df.age_year.values)]
 
     # Get all predictions
-    representation_df = pd.read_csv(f"all_encodings_train_{train_version}_test_{test_version}.csv", delimiter=";")
-    # representation_df = pd.read_csv(f"all_encodings_train_1_test_1.csv", delimiter=";")
+    # representation_df = pd.read_csv(f"all_encodings_train_{train_version}_test_{test_version}.csv", delimiter=";")
+    representation_df = pd.read_csv(f"all_encodings.csv", delimiter=";")
     representation_df = representation_df.groupby('img_name').agg(lambda x: list(x)).reset_index()
 
     representation_df.representations = representation_df.representations.apply(lambda x: [json.loads(i) for i in x])
