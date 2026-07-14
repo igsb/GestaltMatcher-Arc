@@ -1,0 +1,128 @@
+# Verbatim port of the CONFIG dict in
+# notebooks/GestaltMatcher_cohort_analysis_template.ipynb (cell 4).
+#
+# This file exists to reproduce the existing analysis_output/LINS1_2026_07_01
+# run byte-for-byte. It intentionally keeps the notebook's dead and ignored
+# keys. Do not "fix" them here until reproducibility is confirmed; see the
+# DEAD/IGNORED comments below.
+#
+# WARNING: the LINS1 cohort below points at a PRMT7 embedding file. This is
+# carried over from the notebook and is NOT validated. Do not treat the LINS1
+# numbers from this config as a result. Use prmt7_ctnnd2.yaml for real work.
+
+# ---------------------------------------------------------------------------
+# Project identity
+# ---------------------------------------------------------------------------
+target_name: LINS1
+run_date: "2026_07_01"
+output_root: analysis_output
+
+# ---------------------------------------------------------------------------
+# Reference / GMDB gallery
+# ---------------------------------------------------------------------------
+gallery_embedding_file: analysis_metadata/all_gmdb_encodings_v1.1.0_23052026.pkl
+gallery_metadata_files:
+  - analysis_metadata/gmdb_metadata/gmdb_frequent_gallery_images_v1.0.3.csv
+  - analysis_metadata/gmdb_metadata/gmdb_frequent_test_images_v1.0.3.csv
+  - analysis_metadata/gmdb_metadata/gmdb_rare_gallery_images_v1.0.3.csv
+
+# Main metadata table used for image_id -> patient_id / gene / patient_name
+photo_metadata_file: analysis_metadata/patient_metadata_23052026.tsv
+photo_metadata_sep: "\t"
+frontal_face_only: true
+
+# ---------------------------------------------------------------------------
+# Input cohorts
+# ---------------------------------------------------------------------------
+cohorts:
+  LINS1:
+    # TODO(VERIFY WITH TZUNG-CHIEN): this is a PRMT7 embedding file, used for
+    # the LINS1 cohort. Carried over from the notebook, which flagged it with
+    # "TODO: check this filename". The correct LINS1 embedding file must be
+    # identified before any LINS1 result is reported.
+    embedding_file: analysis_metadata/PRMT7_embeddings_04102025_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: LINS1
+    exclude_image_ids: []
+
+  CTNND2:
+    embedding_file: analysis_metadata/CTNND2_gmdb_encodings_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: CTNND2
+    exclude_image_ids: []
+
+active_cohorts:
+  - LINS1
+  - CTNND2
+
+# ---------------------------------------------------------------------------
+# Within-cohort / pooled group analyses
+# ---------------------------------------------------------------------------
+# DEAD KEY: the notebook defines comparison_groups but never reads it. Kept for
+# parity. TODO: wire up or delete after reproducibility is confirmed.
+comparison_groups:
+  LINS1: [LINS1]
+  CTNND2: [CTNND2]
+  # Optional pooled group, only if needed:
+  # LINS1+CTNND2: [LINS1, CTNND2]
+
+# ---------------------------------------------------------------------------
+# Analysis parameters
+# ---------------------------------------------------------------------------
+id_column: subject_id      # "family_id" would avoid family-member matching...
+# DEAD KEY: exclude_family_members is never read. And build_target_df sets
+# family_id = subject_id, so id_column: family_id currently changes nothing.
+exclude_family_members: true
+
+distance_metric: cosine
+n_tta: 12
+random_seed: 0
+
+# Pairwise heatmap
+heatmap_source: rank            # "distance" or "rank"
+# DEAD KEY: heatmap_threshold is never read. The notebook's plot call looks up
+# "pairwise_match_threshold" (undefined) and falls back to a hardcoded 0.748.
+heatmap_threshold: 0.748
+# DEAD KEY: same story. The plot call looks up "pairwise_match_rank" (undefined)
+# and falls back to a hardcoded 300.
+heatmap_match_rank: 300
+# IGNORED KEY: the notebook hardcodes linkage_method="single" at the call site.
+# Wiring this up WOULD CHANGE the heatmap. Do not do it in this pass.
+heatmap_linkage_method: complete
+display_match_box: false
+
+# Optional. Set to null if you do not want crop images around the heatmap.
+input_crops_path: null
+
+# Used only when crop images are displayed.
+default_x_offset: 1.16
+default_y_offset: -0.15
+
+# Random percentile analysis
+random_distribution_file: analysis_metadata/roc_same_random_distribution.csv
+n_random_combinations: 1000
+
+# Same/different comparison and PPV report
+same_different_distribution_file: analysis_metadata/roc_same_different_distribution.csv
+# Only used as a fallback for cross_cohort_comparison.threshold. The notebook's
+# ppv_at_threshold() function is itself never called.
+ppv_threshold: 0.8963266102947289
+
+# ---------------------------------------------------------------------------
+# Cross-cohort comparison module
+# ---------------------------------------------------------------------------
+cross_cohort_comparison:
+  base_cohort: LINS1
+  comparison_cohorts:
+    - CTNND2
+  # Or "all" to compare the base cohort against every other active cohort.
+
+  n_samples: 100
+  min_base_images: 2
+  min_comparison_images: 2
+
+  threshold: 0.8963266102947289
+  pretest_probability: 0.5
+
+  top_k: 8
+  include_same_different_controls: true

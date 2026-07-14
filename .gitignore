@@ -144,3 +144,12 @@ saved_models/
 data/
 *json
 *csv
+analysis_metadata/
+analysis_output/
+*.pkl
+*.tsv
+*.csv
+*.png
+*.svg
+*.pdf
+.ipynb_checkpoints/

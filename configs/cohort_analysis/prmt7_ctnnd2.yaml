@@ -1,0 +1,101 @@
+# PRMT7 vs CTNND2 -- the known-good example cohorts from Tzung-Chien.
+#
+# Use this config as the reference for the refactor. Unlike lins1_ctnnd2.yaml,
+# the embedding file here matches the cohort it is named after.
+#
+# The analysis keys below are identical to the notebook's, including its dead
+# and ignored keys, so that this run stays comparable to the notebook. See
+# lins1_ctnnd2.yaml for the full annotation of which keys are dead.
+
+# ---------------------------------------------------------------------------
+# Project identity
+# ---------------------------------------------------------------------------
+target_name: PRMT7
+run_date: "2026_07_14"
+output_root: analysis_output
+
+# ---------------------------------------------------------------------------
+# Reference / GMDB gallery
+# ---------------------------------------------------------------------------
+gallery_embedding_file: analysis_metadata/all_gmdb_encodings_v1.1.0_23052026.pkl
+gallery_metadata_files:
+  - analysis_metadata/gmdb_metadata/gmdb_frequent_gallery_images_v1.0.3.csv
+  - analysis_metadata/gmdb_metadata/gmdb_frequent_test_images_v1.0.3.csv
+  - analysis_metadata/gmdb_metadata/gmdb_rare_gallery_images_v1.0.3.csv
+
+photo_metadata_file: analysis_metadata/patient_metadata_23052026.tsv
+photo_metadata_sep: "\t"
+frontal_face_only: true
+
+# ---------------------------------------------------------------------------
+# Input cohorts
+# ---------------------------------------------------------------------------
+cohorts:
+  PRMT7:
+    embedding_file: analysis_metadata/PRMT7_embeddings_04102025_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: PRMT7
+    exclude_image_ids: []
+
+  CTNND2:
+    embedding_file: analysis_metadata/CTNND2_gmdb_encodings_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: CTNND2
+    exclude_image_ids: []
+
+active_cohorts:
+  - PRMT7
+  - CTNND2
+
+# DEAD KEY (never read by the notebook). Kept for parity.
+comparison_groups:
+  PRMT7: [PRMT7]
+  CTNND2: [CTNND2]
+
+# ---------------------------------------------------------------------------
+# Analysis parameters
+# ---------------------------------------------------------------------------
+id_column: subject_id
+exclude_family_members: true      # DEAD KEY (never read)
+
+distance_metric: cosine
+n_tta: 12
+random_seed: 0
+
+# Pairwise heatmap
+heatmap_source: rank
+heatmap_threshold: 0.748          # DEAD KEY; call site falls back to 0.748
+heatmap_match_rank: 300           # DEAD KEY; call site falls back to 300
+heatmap_linkage_method: complete  # IGNORED; call site hardcodes "single"
+display_match_box: false
+
+input_crops_path: null
+
+default_x_offset: 1.16
+default_y_offset: -0.15
+
+# Random percentile analysis
+random_distribution_file: analysis_metadata/roc_same_random_distribution.csv
+n_random_combinations: 1000
+
+# Same/different comparison and PPV report
+same_different_distribution_file: analysis_metadata/roc_same_different_distribution.csv
+ppv_threshold: 0.8963266102947289
+
+# ---------------------------------------------------------------------------
+# Cross-cohort comparison module
+# ---------------------------------------------------------------------------
+cross_cohort_comparison:
+  base_cohort: PRMT7
+  comparison_cohorts:
+    - CTNND2
+
+  n_samples: 100
+  min_base_images: 2
+  min_comparison_images: 2
+
+  threshold: 0.8963266102947289
+  pretest_probability: 0.5
+
+  top_k: 8
+  include_same_different_controls: true
