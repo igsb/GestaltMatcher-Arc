@@ -175,12 +175,19 @@ def plot_clustering_heatmap(
 
     # ------------------------------------------------------------------
     # Clustering linkage is always calculated from distance matrix
+    #
+    # The diagonal is zeroed on an explicitly owned array. The notebook wrote
+    # np.fill_diagonal(dist_for_linkage.values, 0), which mutates the frame in
+    # place; under pandas >= 3.0 DataFrame.values is a read-only view
+    # (copy-on-write is mandatory) and that raises
+    # "ValueError: underlying array is read-only". Same values either way.
     # ------------------------------------------------------------------
     dist_for_linkage = dist_df.copy()
-    np.fill_diagonal(dist_for_linkage.values, 0)
+    dist_for_linkage_array = dist_for_linkage.to_numpy(copy=True)
+    np.fill_diagonal(dist_for_linkage_array, 0)
 
     linkage = hc.linkage(
-        sp.distance.squareform(dist_for_linkage.values, checks=False),
+        sp.distance.squareform(dist_for_linkage_array, checks=False),
         method=linkage_method,
     )
 

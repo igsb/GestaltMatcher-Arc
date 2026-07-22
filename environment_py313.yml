@@ -1,0 +1,48 @@
+# Cohort-analysis CLI environment for modern Python (3.13).
+#
+# Python 3.8 (conda "gestalt", environment_gestalt.yml) remains the ORIGINAL
+# reproducibility baseline: the pipeline was validated byte-for-byte against the
+# notebook under that environment, and it stays the reference. This file is for
+# running the refactored CLI on a newer Python; it is an addition, not a
+# replacement, and it does not supersede environment_gestalt.yml (which the rest
+# of the repo -- training, prediction, face alignment -- still needs).
+#
+# Scope: run_cohort_analysis.py + lib/cohort_analysis/ ONLY.
+#
+# Package list derived from the CLI's actual imports:
+#   numpy, pandas, scipy, scikit-learn, matplotlib, seaborn, pillow, pyyaml
+# Deliberately EXCLUDED because the cohort-analysis CLI never imports them:
+#   torch, torchvision  - model/prediction code only
+#   opencv (cv2)        - crop_align.py / face alignment only
+#   rpy2                - not imported anywhere on the cohort-analysis path
+#   tensorboard, google-auth, notebook/jupyter - not needed to run the CLI
+#
+# Python 3.13 has been tested successfully end to end (all 19 outputs; TSV data
+# either byte-identical to the 3.8 baseline or differing only by known
+# floating-point noise that does not affect ranks, PPV, thresholds, or
+# evidence_different). Python 3.14 is NOT claimed: no 3.14 interpreter was
+# available on the test machine, so it was never exercised.
+#
+# NOTE: this exact YAML could not be solved with conda in the test environment
+# (conda could not reach conda.anaconda.org: CondaSSLError /
+# CERTIFICATE_VERIFY_FAILED). The identical package set WAS validated on
+# Python 3.13.14 installed via pip. If conda solving is unavailable, the pip
+# equivalent is:
+#   python -m venv venv && venv/Scripts/pip install \
+#       numpy pandas scipy scikit-learn matplotlib seaborn pillow pyyaml
+
+name: gestalt-py313
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.13
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - pillow
+  - pyyaml
