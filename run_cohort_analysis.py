@@ -35,6 +35,7 @@ from lib.cohort_analysis import pairwise
 from lib.cohort_analysis import plotting
 from lib.cohort_analysis import random_validation
 from lib.cohort_analysis import reports
+from lib.cohort_analysis import run_metadata as run_metadata_module
 
 REPO_ROOT = Path(__file__).resolve().parent
 
@@ -78,12 +79,18 @@ def build_config(config_path, output_root=None):
     return config
 
 
-def run(config, skip_plots=False):
+def run(config, skip_plots=False, config_path=None):
     """Run the full pipeline for one config.
+
+    config_path is the config location as passed on the command line. It is
+    used only for run_metadata.json provenance (path + sha256 of the original
+    file); the effective config still comes from the already-resolved `config`
+    dict, so passing it does not change any result.
 
     Mirrors the notebook top to bottom:
 
         1. prepare output dir, dump run_config.json      (cell 5)
+           + run_metadata.json (provenance; not in the notebook)
         2. load photo metadata, gallery IDs, cohorts     (cells 9, 10)
         3. pairwise distance matrix + rank matrix        (cells 12, 13)
         4. clustering heatmap                            (cell 16)
@@ -95,10 +102,18 @@ def run(config, skip_plots=False):
     """
     output_dir = config_module.prepare_output_dir(config)
     run_config_path = config_module.dump_run_config(config, output_dir)
+    run_metadata_path = run_metadata_module.write_run_metadata(
+        config,
+        output_dir,
+        run_config_path=run_config_path,
+        config_path=config_path,
+        repo_root=REPO_ROOT,
+    )
 
     print("target_name: {}".format(config["target_name"]))
     print("output_dir:  {}".format(output_dir))
     print("wrote:       {}".format(run_config_path))
+    print("wrote:       {}".format(run_metadata_path))
     print("")
 
     # ------------------------------------------------------------------
@@ -319,7 +334,7 @@ def main(argv=None):
     args = parse_args(argv)
 
     config = build_config(args.config, output_root=args.output_root)
-    run(config, skip_plots=args.skip_plots)
+    run(config, skip_plots=args.skip_plots, config_path=args.config)
 
 
 if __name__ == "__main__":

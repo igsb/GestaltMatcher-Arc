@@ -7,6 +7,7 @@ goes through one place.
 Artifacts written by a full run:
 
     run_config.json                                           (cell 5)
+    run_metadata.json                                         (provenance sidecar)
     target_cohort_metadata.tsv                                (cell 9)
     pairwise_distance_matrix.tsv                              (cell 12)
     pairwise_rank_matrix.tsv                                  (cell 13)

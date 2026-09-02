@@ -9,6 +9,7 @@ defines but never reads. Those are marked with TODO comments and must not be
 Module layout mirrors the notebook sections:
 
     config             YAML config loading, output directory
+    run_metadata       run_metadata.json provenance sidecar
     data_loading       metadata, gallery IDs, cohort embedding pickles
     embeddings         TTA reshaping, embedding lookup, distance matrices
     pairwise           target-vs-target distance matrix + rank matrix
@@ -23,6 +24,7 @@ does not pull in matplotlib/seaborn/sklearn. Import the submodule you need.
 
 __all__ = [
     "config",
+    "run_metadata",
     "data_loading",
     "embeddings",
     "pairwise",
