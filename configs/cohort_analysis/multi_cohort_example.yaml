@@ -1,0 +1,57 @@
+# Multi-cohort analysis-plan example (Step 14).
+#
+# NEW SCHEMA. This file is NOT consumed by the analysis runner yet. It exercises
+# the planning path only:
+#
+#     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --dry-run-plan
+#
+# --dry-run-plan expands and prints the plan below without resolving paths,
+# loading any embedding pickle, or running any analysis.
+#
+# The single-analysis configs (prmt7_ctnnd2.yaml, lins1_ctnnd2.yaml) keep their
+# existing schema and behaviour and are unaffected by this file.
+
+# ---------------------------------------------------------------------------
+# Available cohorts
+# ---------------------------------------------------------------------------
+cohorts:
+  PRMT7:
+    embedding_file: analysis_metadata/PRMT7_embeddings_04102025_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: PRMT7
+    exclude_image_ids: []
+
+  LINS1:
+    # WARNING: this points at a PRMT7 embedding file. It is carried over from
+    # the notebook (which flagged it "TODO: check this filename") and from
+    # configs/cohort_analysis/lins1_ctnnd2.yaml. It is NOT a validated LINS1
+    # embedding. Replace embedding_file with the correct LINS1 embedding before
+    # running any LINS1 analysis; until then LINS1 numbers are not a result.
+    embedding_file: analysis_metadata/PRMT7_embeddings_04102025_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: LINS1
+    exclude_image_ids: []
+    warning: >-
+      embedding_file points to the PRMT7 embedding pickle, not a validated LINS1
+      embedding (carried over from lins1_ctnnd2.yaml / the notebook). Provide a
+      correct LINS1 embedding before running LINS1 analysis.
+
+  CTNND2:
+    embedding_file: analysis_metadata/CTNND2_gmdb_encodings_v1.1.0.pkl
+    img_name_parser: drop_last_token
+    label: CTNND2
+    exclude_image_ids: []
+
+# ---------------------------------------------------------------------------
+# Analysis plan (expanded by --dry-run-plan; not executed yet)
+# ---------------------------------------------------------------------------
+analysis_plan:
+  pairwise:
+    mode: all               # all | none | explicit (with cohorts: [...])
+
+  comparisons:
+    mode: all_directed       # all_directed | all_undirected | none | explicit
+
+  combined:
+    - name: PRMT7_LINS1
+      cohorts: [PRMT7, LINS1]

@@ -10,6 +10,7 @@ Module layout mirrors the notebook sections:
 
     config             YAML config loading, output directory
     run_metadata       run_metadata.json provenance sidecar
+    analysis_plan      multi-cohort config detection + plan expansion (planning only)
     data_loading       metadata, gallery IDs, cohort embedding pickles
     embeddings         TTA reshaping, embedding lookup, distance matrices
     pairwise           target-vs-target distance matrix + rank matrix
@@ -25,6 +26,7 @@ does not pull in matplotlib/seaborn/sklearn. Import the submodule you need.
 __all__ = [
     "config",
     "run_metadata",
+    "analysis_plan",
     "data_loading",
     "embeddings",
     "pairwise",

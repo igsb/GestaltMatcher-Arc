@@ -28,6 +28,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from lib.cohort_analysis import analysis_plan
 from lib.cohort_analysis import cohort_comparison
 from lib.cohort_analysis import config as config_module
 from lib.cohort_analysis import data_loading
@@ -61,6 +62,15 @@ def parse_args(argv=None):
         "--skip-plots",
         action="store_true",
         help="Compute and write tables only; skip all figures.",
+    )
+    parser.add_argument(
+        "--dry-run-plan",
+        action="store_true",
+        help=(
+            "Load the config, detect single-analysis vs multi-cohort format, "
+            "print the expanded analysis plan, and exit. No paths are resolved, "
+            "no embeddings are loaded, and no outputs are written."
+        ),
     )
     return parser.parse_args(argv)
 
@@ -330,8 +340,25 @@ def run(config, skip_plots=False, config_path=None):
     return output_dir
 
 
+def dry_run_plan(config_path):
+    """Print the expanded analysis plan for a config and return it.
+
+    Planning only: the raw config is read (no path resolution), the format is
+    detected, and the plan is expanded and printed. No embeddings are loaded and
+    nothing is written to disk.
+    """
+    raw_config = config_module.load_config(config_path)
+    plan = analysis_plan.build_plan(raw_config, config_path=config_path)
+    print(analysis_plan.format_plan(plan))
+    return plan
+
+
 def main(argv=None):
     args = parse_args(argv)
+
+    if args.dry_run_plan:
+        dry_run_plan(args.config)
+        return
 
     config = build_config(args.config, output_root=args.output_root)
     run(config, skip_plots=args.skip_plots, config_path=args.config)
