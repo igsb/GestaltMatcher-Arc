@@ -5,13 +5,13 @@
 #   Plan only (no I/O, no embeddings):
 #     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --dry-run-plan
 #
-#   Execute (Step 15 scope = analysis_plan.pairwise ONLY):
+#   Execute (analysis_plan.pairwise + analysis_plan.combined):
 #     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --skip-plots --output-root <dir>
 #
 # Any config with a top-level `analysis_plan` key is auto-detected as
-# multi-cohort and, when run without --dry-run-plan, executes the pairwise
-# section. analysis_plan.combined and analysis_plan.comparisons are parsed and
-# echoed but NOT executed yet.
+# multi-cohort and, when run without --dry-run-plan, executes the pairwise and
+# combined sections. analysis_plan.comparisons is parsed and recorded in
+# analysis_plan_resolved.json but NOT executed yet.
 #
 # The single-analysis configs (prmt7_ctnnd2.yaml, lins1_ctnnd2.yaml) keep their
 # existing schema and behaviour and are unaffected by this file.
@@ -80,9 +80,9 @@ default_y_offset: -0.15
 
 # ---------------------------------------------------------------------------
 # Analysis plan
-#   pairwise     -> EXECUTED (Step 15)
-#   combined     -> parsed + echoed, NOT executed yet
-#   comparisons  -> parsed + echoed, NOT executed yet
+#   pairwise     -> EXECUTED
+#   combined     -> EXECUTED
+#   comparisons  -> parsed + recorded, NOT executed yet
 # ---------------------------------------------------------------------------
 analysis_plan:
   pairwise:
