@@ -21,6 +21,18 @@ full before being filtered. Expect roughly 5 minutes and several GB of RAM.
 Behaviour is ported from the notebook without changes: a run of
 configs/cohort_analysis/lins1_ctnnd2.yaml reproduces every table in
 analysis_output/LINS1_2026_07_01 byte for byte.
+
+Multi-cohort configs
+--------------------
+A config with a top-level ``analysis_plan`` key is a multi-cohort config. It is
+auto-detected and routed as follows, with no extra CLI flag:
+
+    --dry-run-plan   -> print the expanded plan and exit (Step 14)
+    (otherwise)      -> execute analysis_plan.pairwise only (Step 15), writing
+                        <output_root>/run_<timestamp>_<short_config_hash>/pairwise/<COHORT>/
+
+analysis_plan.combined and analysis_plan.comparisons are parsed and echoed but
+not executed yet. Single-analysis configs are unaffected.
 """
 
 import argparse
@@ -32,6 +44,7 @@ from lib.cohort_analysis import analysis_plan
 from lib.cohort_analysis import cohort_comparison
 from lib.cohort_analysis import config as config_module
 from lib.cohort_analysis import data_loading
+from lib.cohort_analysis import multi_runner
 from lib.cohort_analysis import pairwise
 from lib.cohort_analysis import plotting
 from lib.cohort_analysis import random_validation
@@ -358,6 +371,21 @@ def main(argv=None):
 
     if args.dry_run_plan:
         dry_run_plan(args.config)
+        return
+
+    raw_config = config_module.load_config(args.config)
+
+    if analysis_plan.detect_format(raw_config) == analysis_plan.MULTI_COHORT:
+        # Multi-cohort config: Step 15 executes analysis_plan.pairwise only.
+        config = build_config(args.config, output_root=args.output_root)
+        plan = analysis_plan.build_plan(raw_config, config_path=args.config)
+        multi_runner.run_pairwise_plan(
+            config,
+            plan,
+            skip_plots=args.skip_plots,
+            config_path=args.config,
+            repo_root=REPO_ROOT,
+        )
         return
 
     config = build_config(args.config, output_root=args.output_root)

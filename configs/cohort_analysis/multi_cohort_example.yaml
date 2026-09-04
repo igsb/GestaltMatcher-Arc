@@ -1,12 +1,17 @@
-# Multi-cohort analysis-plan example (Step 14).
+# Multi-cohort analysis-plan example.
 #
-# NEW SCHEMA. This file is NOT consumed by the analysis runner yet. It exercises
-# the planning path only:
+# NEW SCHEMA (top-level `analysis_plan`). Two entry points:
 #
+#   Plan only (no I/O, no embeddings):
 #     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --dry-run-plan
 #
-# --dry-run-plan expands and prints the plan below without resolving paths,
-# loading any embedding pickle, or running any analysis.
+#   Execute (Step 15 scope = analysis_plan.pairwise ONLY):
+#     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --skip-plots --output-root <dir>
+#
+# Any config with a top-level `analysis_plan` key is auto-detected as
+# multi-cohort and, when run without --dry-run-plan, executes the pairwise
+# section. analysis_plan.combined and analysis_plan.comparisons are parsed and
+# echoed but NOT executed yet.
 #
 # The single-analysis configs (prmt7_ctnnd2.yaml, lins1_ctnnd2.yaml) keep their
 # existing schema and behaviour and are unaffected by this file.
@@ -43,7 +48,41 @@ cohorts:
     exclude_image_ids: []
 
 # ---------------------------------------------------------------------------
-# Analysis plan (expanded by --dry-run-plan; not executed yet)
+# Shared reference / analysis settings
+#
+# Ignored by --dry-run-plan (which only reads `cohorts` and `analysis_plan`).
+# Used when the plan is EXECUTED, applied identically to every pairwise cohort.
+# Values mirror configs/cohort_analysis/prmt7_ctnnd2.yaml so per-cohort pairwise
+# numbers stay comparable to the single-analysis pipeline.
+# ---------------------------------------------------------------------------
+output_root: analysis_output
+
+gallery_embedding_file: analysis_metadata/all_gmdb_encodings_v1.1.0_23052026.pkl
+gallery_metadata_files:
+  - analysis_metadata/gmdb_metadata/gmdb_frequent_gallery_images_v1.0.3.csv
+  - analysis_metadata/gmdb_metadata/gmdb_frequent_test_images_v1.0.3.csv
+  - analysis_metadata/gmdb_metadata/gmdb_rare_gallery_images_v1.0.3.csv
+
+photo_metadata_file: analysis_metadata/patient_metadata_23052026.tsv
+photo_metadata_sep: "\t"
+frontal_face_only: true
+
+distance_metric: cosine
+n_tta: 12
+random_seed: 0
+
+# Pairwise heatmap (only used when heatmaps are generated, i.e. no --skip-plots)
+heatmap_source: rank
+display_match_box: false
+input_crops_path: null
+default_x_offset: 1.16
+default_y_offset: -0.15
+
+# ---------------------------------------------------------------------------
+# Analysis plan
+#   pairwise     -> EXECUTED (Step 15)
+#   combined     -> parsed + echoed, NOT executed yet
+#   comparisons  -> parsed + echoed, NOT executed yet
 # ---------------------------------------------------------------------------
 analysis_plan:
   pairwise:
