@@ -64,14 +64,16 @@ original Python 3.8 environment (see *Validation status*).
 
 Two environments, both supported. Neither replaces the other.
 
-### Python 3.8 baseline — `environment_gestalt.yml` (conda `gestalt`)
+### Python 3.8 baseline — `environment_gestalt_no_rpy2.yml` (conda env `gestalt`, Python 3.8.19)
 
 The **original reproducibility baseline**. The pipeline was validated
 byte-for-byte against the notebook under this environment, and it remains the
 reference. The rest of the repo (training, prediction, alignment) also needs it.
+`environment_gestalt_no_rpy2.yml` is the file tracked on this branch; an
+identical `environment_gestalt.yml` may also be present locally.
 
 ```bash
-conda env create -f environment_gestalt.yml
+conda env create -f environment_gestalt_no_rpy2.yml
 conda activate gestalt
 ```
 
@@ -107,7 +109,7 @@ data is obtained separately, not committed). A full run needs:
 
 | Config key | File (example) | Notes |
 |---|---|---|
-| `gallery_embedding_file` | `analysis_metadata/all_gmdb_encodings_v1.1.0_23052026.pkl` | ~1.9 GB GMDB gallery pickle. Read in full, then filtered. Needed for the **rank matrix** (pairwise + combined). Not needed for `--dry-run-plan` or for comparisons. |
+| `gallery_embedding_file` | `analysis_metadata/all_gmdb_encodings_v1.1.0_23052026.pkl` | ~1.9 GB GMDB gallery pickle. Read in full, then filtered. Needed for the **rank matrix** (pairwise + combined). `--dry-run-plan` never loads it; the comparison computation does not use it, but a multi-cohort **execution** loads it once up front regardless of what the plan contains. |
 | `gallery_metadata_files` | 3 CSVs under `analysis_metadata/gmdb_metadata/` | Gallery image-ID lists. |
 | `photo_metadata_file` | `analysis_metadata/patient_metadata_23052026.tsv` | image_id → patient_id lookup. |
 | cohort `embedding_file` (per cohort) | `analysis_metadata/PRMT7_embeddings_04102025_v1.1.0.pkl`, `analysis_metadata/CTNND2_gmdb_encodings_v1.1.0.pkl` | Per-cohort embedding pickles. |
@@ -144,8 +146,10 @@ Output goes to `<output_root>/<target_name>_<run_date>/`, e.g.
 `target_random_percentile_summary.tsv`,
 `target_random_percentile_distributions.tsv`,
 `<base>_cohort_comparison_summary.tsv`,
-`<base>_cohort_comparison_distributions.tsv`, plus figures unless
-`--skip-plots`.
+`<base>_cohort_comparison_distributions.tsv`. Without `--skip-plots` it also
+writes the heatmap, the random-vs-target box/KDE plots, the cohort-comparison
+box plot, and `<target>_random_vs_target_kde_percentile_report.tsv` (that
+report is produced by the plotting step, so `--skip-plots` omits it too).
 
 The second config, `configs/cohort_analysis/lins1_ctnnd2.yaml`, is a verbatim
 port that exists to reproduce an older `analysis_output/LINS1_2026_07_01` run;
@@ -235,9 +239,11 @@ single-analysis pipeline. Contains:
 
 Same three matrices, but computed over the **pooled** images of several member
 cohorts (defined by `analysis_plan.combined`). Same file names as `pairwise/`,
-plus `analysis_metadata.json`. The heatmap is skipped for a group that contains
-**duplicate image IDs** (see caveats) because that would distort the figure; the
-distance/rank matrices are still written, unmodified.
+plus `analysis_metadata.json`. A `<GROUP>_validation_pairwise_rank_single.svg`
+heatmap is written unless `--skip-plots`; it is **additionally** skipped when the
+group contains **duplicate image IDs** (see caveats), since a lookup on repeated
+labels would distort the figure. The distance/rank matrices are always written,
+unmodified.
 
 ### `comparisons/<BASE>_vs_<COMPARISON>/`
 
@@ -278,7 +284,10 @@ Provenance for the whole run. Written once at the top of the run folder. Fields:
 - `platform` — OS / release / version / machine / node.
 - `packages` — versions of numpy, pandas, scipy, sklearn, matplotlib, seaborn,
   Pillow, pyyaml (null if not importable).
-- `output_dir`, `target_name` (null in multi-cohort mode).
+- `output_dir`.
+- `target_name`, `base_cohort`, `comparison_cohorts` — populated in
+  single-analysis mode; `null` in multi-cohort mode (per-analysis identity lives
+  in each folder's `analysis_metadata.json` instead).
 
 Every collector degrades gracefully: a missing git binary or absent package
 yields `null`, never an error.
@@ -294,7 +303,8 @@ resilience) and rewritten at the end with `status: "complete"`. Fields:
 - `executed.combined` — the groups that ran (name + members).
 - `executed.comparisons` — mode, `n_planned`, `n_executed`, `n_skipped`, and a
   `pairs` list with per-pair `status` (`ok` / `skipped`, with `reason`).
-- `not_executed_yet` — `{}` (as of this step every section is executed).
+- `not_executed_yet` — `{}`; every plan section (pairwise, combined,
+  comparisons) is executed.
 - `warnings` — the plan-level warnings.
 
 ### `analysis_metadata.json` (one per analysis folder)
@@ -402,7 +412,9 @@ analysis_plan:
 ```
 
 This runs pairwise for PRMT7 and CTNND2, one combined `PRMT7_CTNND2` group, and
-exactly one comparison (`PRMT7_vs_CTNND2`).
+exactly one comparison (`PRMT7_vs_CTNND2`). The snippet shows only the
+`analysis_plan` block — a working config also needs the `cohorts:` block and the
+shared analysis settings listed above.
 
 ---
 
@@ -529,8 +541,9 @@ cd GestaltMatcher-Arc
 python run_cohort_analysis.py --config configs/cohort_analysis/prmt7_ctnnd2.yaml --skip-plots
 ```
 
-Input data under `analysis_metadata/` and outputs under `analysis_output*/` are
-git-ignored and are **not** carried by the submodule — they must be provided in
-the submodule working tree. Pin the submodule to a specific commit in the parent
-repo for reproducibility, and record which commit was used alongside the
-`run_metadata.json` of any run you keep.
+Input data under `analysis_metadata/` and the run outputs (`.json` / `.tsv` /
+`.csv` / `.pkl` / image files, and the `analysis_output/` directory) are
+git-ignored, so they are **not** carried by the submodule — they must be
+provided in the submodule working tree. Pin the submodule to a specific commit
+in the parent repo for reproducibility, and record which commit was used
+alongside the `run_metadata.json` of any run you keep.
