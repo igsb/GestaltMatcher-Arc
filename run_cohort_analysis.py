@@ -28,14 +28,15 @@ A config with a top-level ``analysis_plan`` key is a multi-cohort config. It is
 auto-detected and routed as follows, with no extra CLI flag:
 
     --dry-run-plan   -> print the expanded plan and exit (Step 14)
-    (otherwise)      -> execute analysis_plan.pairwise + analysis_plan.combined,
+    (otherwise)      -> execute analysis_plan.pairwise + combined + comparisons,
                         writing
                         <output_root>/run_<timestamp>_<short_config_hash>/
                           pairwise/<COHORT>/
                           combined/<GROUP>/
+                          comparisons/<BASE>_vs_<COMPARISON>/
 
-analysis_plan.comparisons is parsed and recorded in analysis_plan_resolved.json
-but not executed yet. Single-analysis configs are unaffected.
+Random percentile validation is not run for multi-cohort configs. Single-analysis
+configs are unaffected.
 """
 
 import argparse
@@ -379,8 +380,7 @@ def main(argv=None):
     raw_config = config_module.load_config(args.config)
 
     if analysis_plan.detect_format(raw_config) == analysis_plan.MULTI_COHORT:
-        # Multi-cohort config: execute analysis_plan.pairwise + analysis_plan.combined.
-        # analysis_plan.comparisons is recorded but not executed yet.
+        # Multi-cohort config: execute analysis_plan.pairwise + combined + comparisons.
         config = build_config(args.config, output_root=args.output_root)
         plan = analysis_plan.build_plan(raw_config, config_path=args.config)
         multi_runner.run_multi_plan(

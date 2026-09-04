@@ -5,13 +5,12 @@
 #   Plan only (no I/O, no embeddings):
 #     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --dry-run-plan
 #
-#   Execute (analysis_plan.pairwise + analysis_plan.combined):
+#   Execute (analysis_plan.pairwise + combined + comparisons):
 #     python run_cohort_analysis.py --config configs/cohort_analysis/multi_cohort_example.yaml --skip-plots --output-root <dir>
 #
 # Any config with a top-level `analysis_plan` key is auto-detected as
-# multi-cohort and, when run without --dry-run-plan, executes the pairwise and
-# combined sections. analysis_plan.comparisons is parsed and recorded in
-# analysis_plan_resolved.json but NOT executed yet.
+# multi-cohort and, when run without --dry-run-plan, executes the pairwise,
+# combined and comparisons sections. Random percentile validation is not run.
 #
 # The single-analysis configs (prmt7_ctnnd2.yaml, lins1_ctnnd2.yaml) keep their
 # existing schema and behaviour and are unaffected by this file.
@@ -78,11 +77,28 @@ input_crops_path: null
 default_x_offset: 1.16
 default_y_offset: -0.15
 
+# Cross-cohort comparison settings (used when analysis_plan.comparisons executes).
+# base_cohort / comparison_cohort come from each directed pair in the plan; only
+# the tunables below are read from here. Values mirror
+# configs/cohort_analysis/prmt7_ctnnd2.yaml so PRMT7_vs_CTNND2 matches the
+# single-analysis pipeline.
+id_column: subject_id
+same_different_distribution_file: analysis_metadata/roc_same_different_distribution.csv
+ppv_threshold: 0.8963266102947289
+
+cross_cohort_comparison:
+  n_samples: 100
+  min_base_images: 2
+  min_comparison_images: 2
+  threshold: 0.8963266102947289
+  pretest_probability: 0.5
+  top_k: 8
+
 # ---------------------------------------------------------------------------
 # Analysis plan
 #   pairwise     -> EXECUTED
 #   combined     -> EXECUTED
-#   comparisons  -> parsed + recorded, NOT executed yet
+#   comparisons  -> EXECUTED
 # ---------------------------------------------------------------------------
 analysis_plan:
   pairwise:

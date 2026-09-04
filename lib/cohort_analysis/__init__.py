@@ -11,7 +11,7 @@ Module layout mirrors the notebook sections:
     config             YAML config loading, output directory
     run_metadata       run_metadata.json provenance sidecar
     analysis_plan      multi-cohort config detection + plan expansion (planning only)
-    multi_runner       multi-cohort execution: analysis_plan.pairwise + combined
+    multi_runner       multi-cohort execution: pairwise + combined + comparisons
     data_loading       metadata, gallery IDs, cohort embedding pickles
     embeddings         TTA reshaping, embedding lookup, distance matrices
     pairwise           target-vs-target distance matrix + rank matrix
