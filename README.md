@@ -25,20 +25,20 @@ Please contact us to obtain the following files and store them in the correspond
 
 Save the following files in ./saved_models/
 1. Resnet50_Final.pth (for the face alignment)
-2. s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
-3. s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
+2. s1_glint360k_r50_512d_gmdb__v1.1.5_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
+3. s2_glint360k_r100_512d_gmdb__v1.1.5_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
 4. glint360k_r100.onnx (model 3 for the encoding)
 
 **Metadata**
 
 Save the following file in ./data/
-1. image_gene_and_syndrome_metadata_pp4_19112025_v112.p (image metadata)
+1. image_gene_and_syndrome_metadata_pp4_v1.1.5.p (image metadata)
 2. transformation_probabilities_07052025.csv (syndrome probability metadata)
 
 **Encodings**
 
 Save the following file in ./data/gallery_encodings/
-1. GMDB_gallery_encodings_v1.1.2_service.pkl (image encodings)
+1. GMDB_gallery_encodings_v1.1.5_service.pkl (image encodings)
 
 **Config file**
 
@@ -98,8 +98,8 @@ case_id: the original filename without file extension
 suggested_genes_list: the ranked gene list sorted by the distance
 suggested_syndromes_list: the ranked syndrome list sorted by the distance
 1. case_id: original filename (without extension).
-2. model_version: GestaltMatcher-Arc model release used for encoding (e.g., v1.1.0).
-3. gallery_version: version/date of the gallery encodings used (e.g., 27.01.2025).
+2. model_version: GestaltMatcher-Arc model release used for encoding (e.g., v1.1.5).
+3. gallery_version: version/date of the gallery encodings used (e.g., v1.1.5).
 4. suggested_genes_list: ranked genes (ascending by cosine distance).
 5. suggested_syndromes_list: ranked syndromes (ascending by cosine distance).
 6. suggested_patients_list: nearest individual patients in GMDB (ascending by cosine distance).
@@ -119,8 +119,8 @@ Please filter out this kind of entry with null gene_entrez_id if you do need the
 ```angular2html
 {    
     "case_id": "cdls_demo",
-    "model_version": "v1.1.2",
-    "gallery_version": "19.11.2025",
+    "model_version": "v1.1.5",
+    "gallery_version": "v1.1.5",
     "suggested_genes_list": [
         {
             "gene_name": "NIPBL",
@@ -329,8 +329,8 @@ Save the following files in ./saved_models/
 3. glint360k_r100.onnx (base pre-trained model for model b)
 
 Trained models by our group:
-1. s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
-2. s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
+1. s1_glint360k_r50_512d_gmdb__v1.1.5_bs64_size112_channels3_last_model.pth (model 1 for the encoding)
+2. s2_glint360k_r100_512d_gmdb__v1.1.5_bs128_size112_channels3_last_model.pth (model 2 for the encoding)
 
 ### Crop and align faces
 In order to get aligned images, you have to run `crop_align.py`. It is possible to either crop and align a single image,
@@ -344,8 +344,8 @@ The face cropper requires the model-weights "Resnet50_Final.pth". Remember to do
 If you don't have GPU, please use `--no_cuda` to run on cpu mode.
 
 ```
-# crop and align the original v1.1.2 
-python .\crop_align.py --data ..\data\GestaltMatcherDB\v1.1.2\gmdb_images --save_dir .\data\GestaltMatcherDB\v1.1.2\gmdb_align
+# crop and align the original v1.1.5 
+python .\crop_align.py --data ..\data\GestaltMatcherDB\v1.1.5\gmdb_images --save_dir .\data\GestaltMatcherDB\v1.1.5\gmdb_align
 
 # crop and align the test image and obtained the aligned image in .\demo_images\cdls_demo_alinged.jpg
 python .\crop_align.py --data .\demo_images\cdls_demo.png --save_dir .\demo_images\
@@ -366,8 +366,8 @@ When setting any of those to 'None' they will not be included in the ensemble.
 
 To reproduce our Gestalt Matcher model listed in the table by training from scratch, use:
 ```
-python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.2 
-python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.2 
+python train_gm_arc.py --paper_model a --epochs 50 --session 1 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.5 
+python train_gm_arc.py --paper_model b --epochs 50 --session 2 --dataset gmdb --in_channels 3 --img_size 112 --use_tensorboard --local --data_dir ../data --dataset_version v1.1.5 
 ```
 
 You may choose whatever seed and session you find useful.
@@ -393,22 +393,22 @@ For machines without a GPU, please use `--no_cuda`.
 ```
 # encode the whole GMDB dataset to obtain the gallery encodings
 python predict.py 
-  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth 
-  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth 
+  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.5_bs64_size112_channels3_last_model.pth 
+  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.5_bs128_size112_channels3_last_model.pth 
   --save_as_pickle 
-  --data ../data/GestaltMatcherDB/v1.1.2/gmdb_align/ 
+  --data ../data/GestaltMatcherDB/v1.1.5/gmdb_align/ 
   --save_dir ./data/gallery_encodings/ 
-  --output_name GMDB_gallery_encodings_v1.1.2.pkl
+  --output_name GMDB_gallery_encodings_v1.1.5.pkl
   
  # encode the image you want to test
- # the output will be in ./data/demo_test/test_encodings_v1.1.2.pkl
+ # the output will be in ./data/demo_test/test_encodings_v1.1.5.pkl
  python predict.py 
-  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.2_bs64_size112_channels3_last_model.pth 
-  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.2_bs128_size112_channels3_last_model.pth 
+  --model_a_path s1_glint360k_r50_512d_gmdb__v1.1.5_bs64_size112_channels3_last_model.pth 
+  --model_b_path s2_glint360k_r100_512d_gmdb__v1.1.5_bs128_size112_channels3_last_model.pth 
   --save_as_pickle 
   --data demo_images/cdls_demo_aligned.jpg 
   --save_dir ./data/demo_test/ 
-  --output_name test_encodings_v1.1.2.pkl
+  --output_name test_encodings_v1.1.5.pkl
 ```
 
 There are 12 encodings per image because there are three models, and test-time augmentation including flip and
@@ -471,10 +471,10 @@ generated and saved when running the training. However, it is included in the di
 For the output file, please indicate the directory with `--output_dir` and the output filename with `--output_file`.
 
 ```
-python evaluate.py --metadata_dir ../data/GestaltMatcherDB/v1.1.0/gmdb_metadata
---gallery_input ./data/gallery_encodings/GMDB_gallery_encodings_v1.1.0.pkl
+python evaluate.py --metadata_dir ../data/GestaltMatcherDB/v1.1.5/gmdb_metadata
+--gallery_input ./data/gallery_encodings/GMDB_gallery_encodings_v1.1.5.pkl
 --output_dir demo_output --output_file demo_results.json
---case_input ./data/demo_test/test_encodings_v1.1.0.pkl --top_n all
+--case_input ./data/demo_test/test_encodings_v1.1.5.pkl --top_n all
 ```
 
 ## References
