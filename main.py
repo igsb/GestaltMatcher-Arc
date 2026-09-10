@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI):
     _cropper_model, _device = load_cropper_model()
     # Load synd dict
 
-    with open(os.path.join("data", "image_gene_and_syndrome_metadata_pp4_12062025_max.p"), "rb") as f:
+    with open(os.path.join("data", "image_gene_and_syndrome_metadata_pp4_v1.1.5.p"), "rb") as f:
         data = pickle.load(f)
     _images_synds_dict = data["disorder_level_metadata"]
     _images_genes_dict = data["gene_level_metadata"]
@@ -291,6 +291,65 @@ async def predict_url_endpoint(
     return result
 
 
+@app.post("/predict_encoding")
+async def predict_encoding_endpoint(
+    username: Annotated[str, Depends(get_current_username)],
+    payload: dict
+):
+    """
+    Predict from one pre-computed embedding case.
+    The client sends the three representation rows for one image/patient.
+    """
+    try:
+        if "encodings" not in payload:
+            raise HTTPException(
+                status_code=422,
+                detail="Missing 'encodings' in request body."
+            )
+
+        case_df = pd.DataFrame(payload["encodings"])
+
+        required_columns = {
+            "img_name",
+            "model",
+            "flip",
+            "gray",
+            "class_conf",
+            "representations"
+        }
+
+        missing_columns = required_columns - set(case_df.columns)
+        if missing_columns:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Missing required columns: {sorted(missing_columns)}"
+            )
+
+        if case_df["img_name"].nunique() != 1:
+            raise HTTPException(
+                status_code=422,
+                detail="Please send embeddings for only one case per request."
+            )
+
+        result = predict(
+            case_df,
+            _gallery_df,
+            _images_synds_dict,
+            _images_genes_dict,
+            _genes_metadata_dict,
+            _synds_metadata_dict,
+            _synds_probabilities_dict
+        )
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Embedding prediction error: {str(e)}"
+        )
 
 @app.get("/status")
 async def status_endpoint():

@@ -144,3 +144,7 @@ saved_models/
 data/
 *json
 *csv
+*xlsx
+
+.venv/
+env_encode_api/
