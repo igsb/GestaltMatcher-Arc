@@ -197,7 +197,8 @@ async def predict_file_endpoint(
             _images_synds_dict,
             _images_genes_dict,
             _genes_metadata_dict,
-            _synds_metadata_dict
+            _synds_metadata_dict,
+            _synds_probabilities_dict
         )
     except Exception:
         return {"message": "Evaluation error."}
@@ -283,7 +284,8 @@ async def predict_url_endpoint(
             _images_synds_dict,
             _images_genes_dict,
             _genes_metadata_dict,
-            _synds_metadata_dict
+            _synds_metadata_dict,
+            _synds_probabilities_dict
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {e}")
